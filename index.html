@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#1B4F8A" />
+  <title>ติดตั้งครุภัณฑ์ สป.พน.</title>
+
+  <!-- Thai font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ===== TOKENS ===== */
+    :root {
+      --blue:       #1B4F8A;
+      --blue-dark:  #143D6B;
+      --blue-light: #EBF2FB;
+      --green:      #1A7A4A;
+      --green-light:#E8F5EE;
+      --amber:      #D97706;
+      --amber-light:#FEF3C7;
+      --red:        #DC2626;
+      --red-light:  #FEE2E2;
+      --gray-50:    #F8FAFC;
+      --gray-100:   #F1F5F9;
+      --gray-200:   #E2E8F0;
+      --gray-400:   #94A3B8;
+      --gray-600:   #475569;
+      --gray-800:   #1E293B;
+      --white:      #FFFFFF;
+      --radius:     12px;
+      --radius-sm:  8px;
+      --shadow:     0 2px 12px rgba(0,0,0,0.08);
+      --shadow-lg:  0 8px 32px rgba(0,0,0,0.12);
+    }
+
+    /* ===== RESET ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      background: var(--gray-100);
+      color: var(--gray-800);
+      overflow-x: hidden;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; font-size: 1rem; }
+    input, select { font-family: inherit; font-size: 1rem; }
+
+    /* ===== LAYOUT ===== */
+    .screen { display: none; min-height: 100dvh; flex-direction: column; }
+    .screen.active { display: flex; }
+
+    /* ===== HEADER ===== */
+    .header {
+      background: var(--blue);
+      color: var(--white);
+      padding: 12px 16px;
+      padding-top: calc(12px + env(safe-area-inset-top));
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-back {
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .header-title { font-size: 1rem; font-weight: 600; flex: 1; }
+    .header-sub { font-size: 0.78rem; opacity: 0.8; margin-top: 1px; }
+    .header-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      overflow: hidden;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem;
+    }
+    .header-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* ===== CONTENT ===== */
+    .content { flex: 1; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+
+    /* ===== CARDS ===== */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--gray-400);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+    }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 14px 20px;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      transition: opacity 0.15s, transform 0.1s;
+      width: 100%;
+    }
+    .btn:active { opacity: 0.85; transform: scale(0.98); }
+    .btn-primary { background: var(--blue); color: var(--white); }
+    .btn-secondary { background: var(--gray-100); color: var(--gray-800); border: 1px solid var(--gray-200); }
+    .btn-success { background: var(--green); color: var(--white); }
+    .btn-danger { background: var(--red); color: var(--white); }
+    .btn-outline { background: var(--white); color: var(--blue); border: 2px solid var(--blue); }
+    .btn:disabled { opacity: 0.45; pointer-events: none; }
+    .btn-icon { font-size: 1.2rem; }
+
+    /* ===== QR SCAN BUTTON (hero) ===== */
+    .btn-qr {
+      background: linear-gradient(135deg, var(--blue) 0%, #2563EB 100%);
+      color: var(--white);
+      padding: 20px;
+      border-radius: var(--radius);
+      display: flex; align-items: center; gap: 14px;
+      box-shadow: 0 4px 20px rgba(27,79,138,0.35);
+      width: 100%;
+      text-align: left;
+    }
+    .btn-qr:active { transform: scale(0.98); }
+    .btn-qr-icon {
+      font-size: 2.2rem;
+      background: rgba(255,255,255,0.15);
+      width: 52px; height: 52px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .btn-qr-text { flex: 1; }
+    .btn-qr-text strong { display: block; font-size: 1.05rem; font-weight: 700; }
+    .btn-qr-text span { font-size: 0.82rem; opacity: 0.85; }
+
+    /* ===== ASSET LIST ===== */
+    .asset-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--gray-200);
+      margin-bottom: 8px;
+      background: var(--white);
+      transition: border-color 0.15s;
+    }
+    .asset-item:last-child { margin-bottom: 0; }
+    .asset-item:active { border-color: var(--blue); background: var(--blue-light); }
+    .asset-badge {
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .badge-pc { background: #DBEAFE; color: #1D4ED8; }
+    .badge-nb { background: #EDE9FE; color: #5B21B6; }
+    .badge-ups { background: #FEF3C7; color: #B45309; }
+    .badge-ups2k { background: #FFE4E6; color: #BE123C; }
+    .badge-tab { background: #DCFCE7; color: #15803D; }
+    .badge-done { background: var(--green-light); color: var(--green); }
+    .asset-info { flex: 1; min-width: 0; }
+    .asset-id { font-weight: 700; font-size: 0.95rem; }
+    .asset-loc { font-size: 0.78rem; color: var(--gray-600); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .asset-status { font-size: 0.75rem; font-weight: 600; }
+    .status-pending { color: var(--amber); }
+    .status-uploading { color: var(--blue); }
+    .status-completed { color: var(--green); }
+
+    /* ===== PHOTO GRID ===== */
+    .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .photo-slot {
+      aspect-ratio: 4/3;
+      border-radius: var(--radius-sm);
+      border: 2px dashed var(--gray-200);
+      background: var(--gray-50);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      overflow: hidden;
+      position: relative;
+      transition: border-color 0.15s;
+    }
+    .photo-slot.filled { border: 2px solid var(--green); }
+    .photo-slot.filled::after {
+      content: '✓';
+      position: absolute;
+      top: 6px; right: 6px;
+      background: var(--green);
+      color: white;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      font-size: 0.7rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .photo-slot img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-slot-label {
+      font-size: 0.72rem;
+      color: var(--gray-600);
+      font-weight: 600;
+      text-align: center;
+      padding: 0 6px;
+      line-height: 1.3;
+    }
+    .photo-slot-icon { font-size: 1.5rem; color: var(--gray-400); }
+    input[type="file"] { display: none; }
+
+    /* ===== PAGE DIVIDER ===== */
+    .page-divider {
+      display: flex; align-items: center; gap: 10px;
+      margin: 4px 0;
+    }
+    .page-divider-line { flex: 1; height: 1px; background: var(--gray-200); }
+    .page-divider-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--gray-400);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+
+    /* ===== SN INPUT ===== */
+    .sn-row {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 8px;
+    }
+    .sn-row:last-child { margin-bottom: 0; }
+    .sn-label { font-size: 0.82rem; font-weight: 600; color: var(--gray-600); width: 56px; flex-shrink: 0; }
+    .sn-input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      background: var(--gray-50);
+      color: var(--gray-800);
+      transition: border-color 0.15s;
+    }
+    .sn-input:focus { outline: none; border-color: var(--blue); background: var(--white); }
+    .sn-input.auto-filled { border-color: var(--green); background: var(--green-light); color: var(--green); font-weight: 600; }
+
+    /* ===== PROGRESS ===== */
+    .progress-wrap { background: var(--gray-200); border-radius: 99px; overflow: hidden; height: 6px; }
+    .progress-bar { height: 100%; background: var(--blue); border-radius: 99px; transition: width 0.3s; }
+    .progress-label { font-size: 0.78rem; color: var(--gray-600); margin-top: 4px; text-align: center; }
+
+    /* ===== TOAST ===== */
+    .toast {
+      position: fixed; bottom: calc(24px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
+      background: var(--gray-800); color: var(--white);
+      padding: 10px 18px; border-radius: 99px;
+      font-size: 0.85rem; font-weight: 500;
+      z-index: 999; white-space: nowrap;
+      opacity: 0; transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+    .toast.success { background: var(--green); }
+    .toast.error { background: var(--red); }
+
+    /* ===== LOADING ===== */
+    .loading-overlay {
+      position: fixed; inset: 0;
+      background: rgba(255,255,255,0.9);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 12px; z-index: 998;
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--gray-200);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 0.9rem; color: var(--gray-600); }
+
+    /* ===== DIVIDER ===== */
+    .or-divider {
+      display: flex; align-items: center; gap: 10px;
+      color: var(--gray-400); font-size: 0.82rem;
+    }
+    .or-divider::before, .or-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--gray-200);
+    }
+
+    /* ===== FILTER CHIPS ===== */
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip {
+      padding: 6px 14px;
+      border-radius: 99px;
+      border: 1.5px solid var(--gray-200);
+      font-size: 0.82rem; font-weight: 600;
+      background: var(--white);
+      color: var(--gray-600);
+      transition: all 0.15s;
+    }
+    .chip.active { background: var(--blue); border-color: var(--blue); color: var(--white); }
+
+    /* ===== SELECT ===== */
+    .select-field {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      background: var(--gray-50);
+      color: var(--gray-800);
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394A3B8' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+    }
+    .select-field:focus { outline: none; border-color: var(--blue); }
+
+    /* ===== SUCCESS SCREEN ===== */
+    .success-icon {
+      width: 72px; height: 72px;
+      background: var(--green-light);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.2rem;
+      margin: 0 auto 16px;
+    }
+    .success-title { text-align: center; font-size: 1.2rem; font-weight: 700; color: var(--green); }
+    .success-sub { text-align: center; font-size: 0.85rem; color: var(--gray-600); margin-top: 4px; }
+
+    /* ===== EMPTY STATE ===== */
+    .empty { text-align: center; padding: 40px 20px; color: var(--gray-400); }
+    .empty-icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .empty-text { font-size: 0.9rem; }
+
+    /* ===== UPLOAD BAR ===== */
+    .upload-step {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 0;
+    }
+    .upload-step-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--gray-200); flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    .upload-step-dot.done { background: var(--green); }
+    .upload-step-dot.active { background: var(--blue); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+    .upload-step-label { font-size: 0.85rem; color: var(--gray-600); }
+    .upload-step-label.done { color: var(--green); font-weight: 600; }
+    .upload-step-label.active { color: var(--blue); font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<!-- ======================================================
+     SCREEN: LOADING
+====================================================== -->
+<div id="screen-loading" class="screen active">
+  <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;">
+    <div style="font-size:2.5rem;">⚡</div>
+    <div class="spinner"></div>
+    <div style="font-size:0.9rem; color:var(--gray-600);">กำลังเชื่อมต่อ LINE...</div>
+  </div>
+</div>
+
+<!-- ======================================================
+     SCREEN: HOME (สแกน QR หรือเลือกรายการ)
+====================================================== -->
+<div id="screen-home" class="screen">
+  <header class="header">
+    <div style="flex:1;">
+      <div class="header-title">ติดตั้งครุภัณฑ์ สป.พน.</div>
+      <div class="header-sub" id="installer-name">กำลังโหลด...</div>
+    </div>
+    <div class="header-avatar" id="installer-avatar">👤</div>
+  </header>
+
+  <div class="content">
+    <!-- QR Hero -->
+    <button class="btn-qr" id="btn-scan-qr">
+      <div class="btn-qr-icon">📷</div>
+      <div class="btn-qr-text">
+        <strong>สแกน QR บน Sticker</strong>
+        <span>วิธีที่เร็วที่สุด — ไม่ต้องกรอกอะไร</span>
+      </div>
+      <span style="font-size:1.2rem; opacity:0.7;">›</span>
+    </button>
+
+    <div class="or-divider">หรือเลือกจากรายการ</div>
+
+    <!-- Filter: ส่วนกลาง / ภูมิภาค -->
+    <div class="card" style="padding:12px;">
+      <div class="chips" id="region-chips">
+        <button class="chip active" data-region="central">🏛️ ส่วนกลาง</button>
+        <button class="chip" data-region="provincial">🗺️ ภูมิภาค</button>
+      </div>
+    </div>
+
+    <!-- จังหวัด (แสดงเฉพาะภูมิภาค) -->
+    <div id="province-wrap" class="card" style="padding:12px; display:none;">
+      <select class="select-field" id="province-select">
+        <option value="">— เลือกจังหวัด —</option>
+      </select>
+    </div>
+
+    <!-- Asset List -->
+    <div class="card" style="padding:12px;">
+      <div class="card-title" id="list-title">รายการ — ส่วนกลาง</div>
+      <div id="asset-list">
+        <div class="empty">
+          <div class="empty-icon">📋</div>
+          <div class="empty-text">กำลังโหลดรายการ...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================
+     SCREEN: INSTALL (ถ่ายภาพ + กรอก S/N)
+====================================================== -->
+<div id="screen-install" class="screen">
+  <header class="header">
+    <button class="header-back" id="btn-back-install">‹</button>
+    <div style="flex:1;">
+      <div class="header-title" id="install-title">ติดตั้ง PC-000</div>
+      <div class="header-sub" id="install-loc">—</div>
+    </div>
+    <div id="install-template-badge" class="asset-badge badge-pc" style="font-size:0.7rem;">T1</div>
+  </header>
+
+  <div class="content" id="install-content">
+    <!-- จะ generate ตาม template -->
+  </div>
+
+  <!-- Submit button (sticky bottom) -->
+  <div style="padding:12px 16px; padding-bottom:calc(12px + env(safe-area-inset-bottom)); background:var(--white); border-top:1px solid var(--gray-200);">
+    <button class="btn btn-success" id="btn-submit" disabled>
+      <span>✓</span> ส่งข้อมูล
+    </button>
+  </div>
+</div>
+
+<!-- ======================================================
+     SCREEN: UPLOADING
+====================================================== -->
+<div id="screen-uploading" class="screen">
+  <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; gap:0;">
+    <div style="font-size:2rem; margin-bottom:20px;">📤</div>
+    <div style="font-weight:700; font-size:1.1rem; margin-bottom:4px;" id="upload-asset-label">PC-000</div>
+    <div style="font-size:0.82rem; color:var(--gray-600); margin-bottom:24px;" id="upload-loc-label">—</div>
+
+    <div style="width:100%; max-width:320px;">
+      <div class="progress-wrap" style="height:8px; margin-bottom:8px;">
+        <div class="progress-bar" id="upload-progress" style="width:0%"></div>
+      </div>
+      <div class="progress-label" id="upload-progress-label">0%</div>
+    </div>
+
+    <div style="width:100%; max-width:320px; margin-top:20px;" id="upload-steps"></div>
+  </div>
+</div>
+
+<!-- ======================================================
+     SCREEN: SUCCESS
+====================================================== -->
+<div id="screen-success" class="screen">
+  <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px;">
+    <div class="success-icon">✓</div>
+    <div class="success-title" id="success-asset">PC-000</div>
+    <div class="success-sub" id="success-loc">—</div>
+    <div style="margin-top:8px; font-size:0.8rem; color:var(--gray-400);" id="success-time">—</div>
+
+    <div style="margin-top:32px; width:100%; max-width:320px; display:flex; flex-direction:column; gap:10px;">
+      <button class="btn btn-primary" id="btn-next-asset">ติดตั้งเครื่องถัดไป</button>
+      <button class="btn btn-secondary" id="btn-back-home">กลับหน้าหลัก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================
+     TOAST
+====================================================== -->
+<div id="toast" class="toast"></div>
+
+<!-- ======================================================
+     Hidden file inputs
+====================================================== -->
+<input type="file" id="file-input-camera" accept="image/*" capture="environment" />
+<input type="file" id="file-input-gallery" accept="image/*" multiple />
+
+<!-- SDK โหลดก่อน main script เสมอ -->
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+
+<script>
+// ============================================================
+// CONFIG — แก้ค่าตรงนี้
+// ============================================================
+const FIREBASE_CONFIG = {
+  apiKey:            'AIzaSyA-F0uH5WcyNpxpUNe7oXDG0_z4vqczW50',
+  authDomain:        'acacia-sppn.firebaseapp.com',
+  projectId:         'acacia-sppn',
+  storageBucket:     'acacia-sppn.firebasestorage.app',
+  messagingSenderId: '846071482521',
+  appId:             '1:846071482521:web:00f846689dec1029d0d008',
+};
+const LIFF_ID = '2010384567-I6cKE9HG'
+
+// ============================================================
+// TEMPLATE DEFINITIONS
+// ============================================================
+const TEMPLATES = {
+  PC1: {
+    label: 'PC + UPS',
+    badge: 'badge-pc',
+    pages: [
+      {
+        title: 'หน้า 1 — PC & MS Office',
+        slots: [
+          { key: 'install',   label: 'เครื่องเปิดพร้อมใช้งาน' },
+          { key: 'msOffice',  label: 'หน้าจอ MS Office' },
+          { key: 'snPc',      label: 'S/N PC (ข้างเครื่อง)' },
+          { key: 'stickerPc', label: 'Sticker PC' },
+        ],
+      },
+      {
+        title: 'หน้า 2 — จอ & UPS',
+        slots: [
+          { key: 'snMonitor',      label: 'S/N จอภาพ' },
+          { key: 'stickerMonitor', label: 'Sticker จอภาพ' },
+          { key: 'snUps',          label: 'S/N UPS 800VA' },
+          { key: 'stickerUps',     label: 'Sticker UPS' },
+        ],
+      },
+    ],
+    snFields: [
+      { key: 'pc',      label: 'PC' },
+      { key: 'monitor', label: 'จอ' },
+      { key: 'ups',     label: 'UPS' },
+    ],
+  },
+  PC2: {
+    label: 'PC (ไม่มี UPS)',
+    badge: 'badge-pc',
+    pages: [
+      {
+        title: 'หน้า 1 — PC & MS Office',
+        slots: [
+          { key: 'install',        label: 'เครื่องเปิดพร้อมใช้งาน' },
+          { key: 'msOffice',       label: 'หน้าจอ MS Office' },
+          { key: 'snPc',           label: 'S/N PC' },
+          { key: 'stickerPc',      label: 'Sticker PC' },
+        ],
+      },
+      {
+        title: 'หน้า 2 — จอภาพ',
+        slots: [
+          { key: 'snMonitor',      label: 'S/N จอภาพ' },
+          { key: 'stickerMonitor', label: 'Sticker จอภาพ' },
+        ],
+      },
+    ],
+    snFields: [
+      { key: 'pc',      label: 'PC' },
+      { key: 'monitor', label: 'จอ' },
+    ],
+  },
+  Notebook: {
+    label: 'Notebook',
+    badge: 'badge-nb',
+    pages: [
+      {
+        title: 'หน้า 1 — Notebook',
+        slots: [
+          { key: 'install',   label: 'เครื่องเปิดพร้อมใช้งาน' },
+          { key: 'msOffice',  label: 'หน้าจอ MS Office' },
+          { key: 'snPc',      label: 'S/N เครื่อง (ใต้เครื่อง)' },
+          { key: 'stickerPc', label: 'Sticker' },
+        ],
+      },
+    ],
+    snFields: [
+      { key: 'pc', label: 'NB' },
+    ],
+  },
+  UPS2k: {
+    label: 'UPS 2kVA',
+    badge: 'badge-ups2k',
+    pages: [
+      {
+        title: 'หน้า 1 — UPS 2kVA',
+        slots: [
+          { key: 'snUps',      label: 'UPS วางในตู้ Rack' },
+          { key: 'stickerUps', label: 'S/N UPS' },
+        ],
+      },
+    ],
+    snFields: [
+      { key: 'ups', label: 'UPS' },
+    ],
+  },
+  Tablet: {
+    label: 'iPad',
+    badge: 'badge-tab',
+    pages: [
+      {
+        title: 'หน้า 1 — iPad',
+        slots: [
+          { key: 'install',   label: 'iPad เปิดเครื่อง' },
+          { key: 'msOffice',  label: 'หน้า iPadOS' },
+          { key: 'snPc',      label: 'S/N iPad' },
+          { key: 'stickerPc', label: 'Sticker' },
+        ],
+      },
+    ],
+    snFields: [
+      { key: 'pc', label: 'iPad' },
+    ],
+  },
+};
+
+// deviceType → template key
+const DEVICE_TEMPLATE = {
+  PC1: 'PC1', PC2: 'PC2',
+  Notebook: 'Notebook',
+  UPS2k: 'UPS2k',
+  Tablet: 'Tablet',
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let installer = { lineUserId: '', name: '', pictureUrl: '' };
+let currentAsset = null;     // Firestore doc
+let photos = {};             // { slotKey: File }
+let serialNumbers = {};      // { pc, monitor, ups }
+let currentRegion = 'central';
+let currentProvince = '';
+let allAssets = [];
+
+// ============================================================
+// FIREBASE INIT
+// ============================================================
+firebase.initializeApp(FIREBASE_CONFIG);
+const db      = firebase.firestore();
+const storage = firebase.storage();
+
+// ============================================================
+// HELPERS
+// ============================================================
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(`screen-${name}`).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+let toastTimer;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ` ${type}` : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function compressImage(file, maxW = 1280, quality = 0.82) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxW / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(img.width  * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(blob => resolve(new File([blob], file.name, { type: 'image/jpeg' })), 'image/jpeg', quality);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function getBadgeClass(deviceType) {
+  const map = { PC1:'badge-pc', PC2:'badge-pc', Notebook:'badge-nb', UPS2k:'badge-ups2k', Tablet:'badge-tab', UPS800:'badge-ups' };
+  return map[deviceType] || 'badge-pc';
+}
+function getTemplateKey(deviceType) { return DEVICE_TEMPLATE[deviceType] || 'PC1'; }
+
+// ============================================================
+// LIFF INIT
+// ============================================================
+async function initLiff() {
+  try {
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) { liff.login(); return; }
+    const profile = await liff.getProfile();
+    installer = { lineUserId: profile.userId, name: profile.displayName, pictureUrl: profile.pictureUrl || '' };
+    document.getElementById('installer-name').textContent = profile.displayName;
+    const av = document.getElementById('installer-avatar');
+    if (profile.pictureUrl) av.innerHTML = `<img src="${profile.pictureUrl}" alt="" />`;
+    await loadAssets();
+    showScreen('home');
+  } catch (err) {
+    console.error(err);
+    showToast('เชื่อมต่อ LINE ไม่สำเร็จ', 'error');
+  }
+}
+
+// ============================================================
+// LOAD ASSETS
+// ============================================================
+async function loadAssets() {
+  try {
+    const snap = await db.collection('installations')
+      .where('status', 'in', ['pending', 'uploading'])
+      .orderBy('assetId')
+      .get();
+    allAssets = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+    populateProvinces();
+    renderAssetList();
+  } catch (err) {
+    console.error(err);
+    showToast('โหลดรายการไม่สำเร็จ', 'error');
+  }
+}
+
+// ============================================================
+// PROVINCES
+// ============================================================
+function populateProvinces() {
+  const provinces = [...new Set(
+    allAssets
+      .filter(a => a.location?.region === 'provincial')
+      .map(a => a.location?.province)
+      .filter(Boolean)
+  )].sort();
+
+  const sel = document.getElementById('province-select');
+  sel.innerHTML = '<option value="">— เลือกจังหวัด —</option>';
+  provinces.forEach(p => {
+    const count = allAssets.filter(a => a.location?.province === p).length;
+    sel.innerHTML += `<option value="${p}">${p} (${count})</option>`;
+  });
+}
+
+// ============================================================
+// RENDER ASSET LIST
+// ============================================================
+function renderAssetList() {
+  const list = document.getElementById('asset-list');
+  let filtered = allAssets;
+
+  if (currentRegion === 'central') {
+    filtered = filtered.filter(a => a.location?.region === 'central');
+    document.getElementById('list-title').textContent = 'รายการ — ส่วนกลาง';
+  } else {
+    filtered = filtered.filter(a => a.location?.region === 'provincial');
+    if (currentProvince) {
+      filtered = filtered.filter(a => a.location?.province === currentProvince);
+      document.getElementById('list-title').textContent = `รายการ — ${currentProvince}`;
+    } else {
+      document.getElementById('list-title').textContent = 'รายการ — ภูมิภาค';
+      filtered = [];
+    }
+  }
+
+  if (!filtered.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">${currentRegion === 'provincial' && !currentProvince ? '👆' : '🎉'}</div><div class="empty-text">${currentRegion === 'provincial' && !currentProvince ? 'เลือกจังหวัดก่อน' : 'ไม่มีรายการที่รอดำเนินการ'}</div></div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(a => {
+    const tKey = getTemplateKey(a.deviceType);
+    const tmpl = TEMPLATES[tKey];
+    const loc  = a.location?.region === 'central' ? (a.location?.office || 'ส่วนกลาง') : (a.location?.province || '');
+    return `
+      <div class="asset-item" onclick="selectAsset('${a.docId}')">
+        <div class="asset-badge ${getBadgeClass(a.deviceType)}">${tmpl?.label || a.deviceType}</div>
+        <div class="asset-info">
+          <div class="asset-id">${a.assetId}</div>
+          <div class="asset-loc">${loc}</div>
+        </div>
+        <div class="asset-status status-${a.status}">${a.status === 'pending' ? 'รอติดตั้ง' : 'กำลังทำ'}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ============================================================
+// SELECT ASSET
+// ============================================================
+function selectAsset(docId) {
+  const asset = allAssets.find(a => a.docId === docId);
+  if (!asset) return;
+  openInstallScreen(asset);
+}
+
+function openInstallScreen(asset) {
+  currentAsset = asset;
+  photos = {};
+  serialNumbers = {};
+
+  const tKey = getTemplateKey(asset.deviceType);
+  const tmpl = TEMPLATES[tKey];
+  const loc  = asset.location?.region === 'central'
+    ? (asset.location?.office || 'ส่วนกลาง')
+    : (asset.location?.province || '');
+
+  document.getElementById('install-title').textContent = asset.assetId;
+  document.getElementById('install-loc').textContent = loc;
+  document.getElementById('install-template-badge').textContent = tKey;
+  document.getElementById('install-template-badge').className = `asset-badge ${getBadgeClass(asset.deviceType)}`;
+
+  // Pre-fill S/N from QR scan if available
+  if (asset._qrSN) {
+    const field = tmpl.snFields[0];
+    if (field) serialNumbers[field.key] = asset._qrSN;
+  }
+
+  renderInstallContent(tKey, tmpl);
+  showScreen('install');
+}
+
+// ============================================================
+// RENDER INSTALL CONTENT
+// ============================================================
+function renderInstallContent(tKey, tmpl) {
+  const content = document.getElementById('install-content');
+  let html = '';
+
+  // Photo pages
+  tmpl.pages.forEach((page, pi) => {
+    html += `<div class="card">`;
+    html += `<div class="card-title">${page.title}</div>`;
+    html += `<div class="photo-grid">`;
+    page.slots.forEach(slot => {
+      html += `
+        <div class="photo-slot" id="slot-${slot.key}" onclick="triggerPhoto('${slot.key}')">
+          <div class="photo-slot-icon">📷</div>
+          <div class="photo-slot-label">${slot.label}</div>
+        </div>
+      `;
+    });
+    html += `</div>`;
+    // Import from gallery option
+    html += `<button class="btn btn-secondary" style="margin-top:10px; font-size:0.82rem; padding:8px;" onclick="triggerGalleryForPage(${pi})">📁 นำเข้าจากคลังภาพ (หน้านี้)</button>`;
+    html += `</div>`;
+  });
+
+  // S/N fields
+  html += `<div class="card">`;
+  html += `<div class="card-title">Serial Numbers</div>`;
+  tmpl.snFields.forEach(f => {
+    const preVal = serialNumbers[f.key] || '';
+    const cls    = preVal ? 'sn-input auto-filled' : 'sn-input';
+    html += `
+      <div class="sn-row">
+        <div class="sn-label">${f.label}</div>
+        <input class="${cls}" id="sn-${f.key}" type="text" value="${preVal}" placeholder="กรอก S/N หรือสแกน QR" oninput="checkSubmitReady()" />
+      </div>
+    `;
+  });
+  html += `</div>`;
+
+  content.innerHTML = html;
+  checkSubmitReady();
+}
+
+// ============================================================
+// PHOTO HANDLING
+// ============================================================
+let activeSlotKey = null;
+let activePageSlots = [];
+
+function triggerPhoto(slotKey) {
+  activeSlotKey = slotKey;
+  document.getElementById('file-input-camera').click();
+}
+
+function triggerGalleryForPage(pageIndex) {
+  const tKey = getTemplateKey(currentAsset.deviceType);
+  const tmpl = TEMPLATES[tKey];
+  activePageSlots = tmpl.pages[pageIndex].slots.map(s => s.key);
+  document.getElementById('file-input-gallery').click();
+}
+
+document.getElementById('file-input-camera').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file || !activeSlotKey) return;
+  await assignPhoto(activeSlotKey, file);
+  e.target.value = '';
+});
+
+document.getElementById('file-input-gallery').addEventListener('change', async e => {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  // assign ตามลำดับ slot ของหน้านั้น
+  files.forEach((file, i) => {
+    if (i < activePageSlots.length) assignPhoto(activePageSlots[i], file);
+  });
+  e.target.value = '';
+});
+
+async function assignPhoto(slotKey, file) {
+  const compressed = await compressImage(file);
+  photos[slotKey] = compressed;
+
+  const slot = document.getElementById(`slot-${slotKey}`);
+  if (!slot) return;
+  const url = URL.createObjectURL(compressed);
+  slot.innerHTML = `<img src="${url}" alt="" />`;
+  slot.classList.add('filled');
+  checkSubmitReady();
+}
+
+// ============================================================
+// SUBMIT READY CHECK
+// ============================================================
+function checkSubmitReady() {
+  if (!currentAsset) return;
+  const tKey = getTemplateKey(currentAsset.deviceType);
+  const tmpl = TEMPLATES[tKey];
+
+  // all photo slots filled?
+  const allSlots = tmpl.pages.flatMap(p => p.slots.map(s => s.key));
+  const photosDone = allSlots.every(k => photos[k]);
+
+  // all S/N filled?
+  const snDone = tmpl.snFields.every(f => {
+    const el = document.getElementById(`sn-${f.key}`);
+    return el && el.value.trim().length > 0;
+  });
+
+  document.getElementById('btn-submit').disabled = !(photosDone && snDone);
+}
+
+// ============================================================
+// QR SCAN
+// ============================================================
+document.getElementById('btn-scan-qr').addEventListener('click', async () => {
+  try {
+    const result = await liff.scanCodeV2();
+    if (!result?.value) return;
+
+    // QR format: "AssetID|SN"  เช่น "PC-053|SNABCXYZ"
+    const parts   = result.value.split('|');
+    const assetId = parts[0]?.trim();
+    const sn      = parts[1]?.trim() || '';
+
+    const asset = allAssets.find(a => a.assetId === assetId);
+    if (!asset) {
+      showToast(`ไม่พบ Asset: ${assetId}`, 'error');
+      return;
+    }
+    if (asset.status === 'completed') {
+      showToast(`${assetId} ติดตั้งเสร็จแล้ว`, 'error');
+      return;
+    }
+    asset._qrSN = sn;
+    openInstallScreen(asset);
+  } catch (err) {
+    console.error(err);
+    showToast('สแกน QR ไม่สำเร็จ', 'error');
+  }
+});
+
+// ============================================================
+// SUBMIT
+// ============================================================
+document.getElementById('btn-submit').addEventListener('click', async () => {
+  if (!currentAsset) return;
+  const tKey = getTemplateKey(currentAsset.deviceType);
+  const tmpl = TEMPLATES[tKey];
+
+  // collect S/N
+  tmpl.snFields.forEach(f => {
+    const el = document.getElementById(`sn-${f.key}`);
+    if (el) serialNumbers[f.key] = el.value.trim();
+  });
+
+  // mark uploading
+  await db.collection('installations').doc(currentAsset.docId).update({ status: 'uploading' });
+
+  showScreen('uploading');
+  document.getElementById('upload-asset-label').textContent = currentAsset.assetId;
+  const loc = currentAsset.location?.region === 'central'
+    ? (currentAsset.location?.office || 'ส่วนกลาง')
+    : (currentAsset.location?.province || '');
+  document.getElementById('upload-loc-label').textContent = loc;
+
+  // build upload steps
+  const allSlots = tmpl.pages.flatMap(p => p.slots);
+  const steps = document.getElementById('upload-steps');
+  steps.innerHTML = allSlots.map(s =>
+    `<div class="upload-step"><div class="upload-step-dot" id="dot-${s.key}"></div><div class="upload-step-label" id="lbl-${s.key}">${s.label}</div></div>`
+  ).join('') + `<div class="upload-step"><div class="upload-step-dot" id="dot-firestore"></div><div class="upload-step-label" id="lbl-firestore">บันทึกข้อมูล</div></div>`;
+
+  try {
+    const photoUrls = {};
+    let done = 0;
+    const total = allSlots.length + 1;
+
+    for (const slot of allSlots) {
+      document.getElementById(`dot-${slot.key}`).className = 'upload-step-dot active';
+      document.getElementById(`lbl-${slot.key}`).className = 'upload-step-label active';
+
+      const file = photos[slot.key];
+      // filename convention: PC-053_01_install.jpg
+      const idx  = String(allSlots.indexOf(slot) + 1).padStart(2, '0');
+      const path = `installations/${currentAsset.assetId}/${idx}_${slot.key}.jpg`;
+      const ref  = storage.ref(path);
+      await ref.put(file);
+      photoUrls[slot.key] = await ref.getDownloadURL();
+
+      done++;
+      const pct = Math.round((done / total) * 100);
+      document.getElementById('upload-progress').style.width = pct + '%';
+      document.getElementById('upload-progress-label').textContent = pct + '%';
+      document.getElementById(`dot-${slot.key}`).className = 'upload-step-dot done';
+      document.getElementById(`lbl-${slot.key}`).className = 'upload-step-label done';
+    }
+
+    // Firestore update
+    document.getElementById('dot-firestore').className = 'upload-step-dot active';
+    document.getElementById('lbl-firestore').className = 'upload-step-label active';
+
+    await db.collection('installations').doc(currentAsset.docId).update({
+      serialNumbers,
+      photos: photoUrls,
+      installer,
+      status:      'completed',
+      completedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+
+    document.getElementById('upload-progress').style.width = '100%';
+    document.getElementById('upload-progress-label').textContent = '100%';
+    document.getElementById('dot-firestore').className = 'upload-step-dot done';
+    document.getElementById('lbl-firestore').className = 'upload-step-label done';
+
+    // success screen
+    document.getElementById('success-asset').textContent = currentAsset.assetId;
+    document.getElementById('success-loc').textContent = loc;
+    document.getElementById('success-time').textContent = new Date().toLocaleString('th-TH');
+    showScreen('success');
+
+    // refresh list (background)
+    loadAssets();
+
+  } catch (err) {
+    console.error(err);
+    await db.collection('installations').doc(currentAsset.docId).update({ status: 'pending' });
+    showToast('อัปโหลดไม่สำเร็จ — กรุณาลองใหม่', 'error');
+    showScreen('install');
+  }
+});
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+document.getElementById('btn-back-install').addEventListener('click', () => {
+  const hasPhoto = Object.keys(photos).length > 0;
+  if (hasPhoto && !confirm('ออกจากหน้านี้? ภาพที่ถ่ายไว้จะหายไป')) return;
+  showScreen('home');
+});
+
+document.getElementById('btn-next-asset').addEventListener('click', () => showScreen('home'));
+document.getElementById('btn-back-home').addEventListener('click', () => showScreen('home'));
+
+// ============================================================
+// REGION / PROVINCE FILTERS
+// ============================================================
+document.getElementById('region-chips').addEventListener('click', e => {
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  currentRegion = chip.dataset.region;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+
+  const provWrap = document.getElementById('province-wrap');
+  if (currentRegion === 'provincial') {
+    provWrap.style.display = '';
+  } else {
+    provWrap.style.display = 'none';
+    currentProvince = '';
+  }
+  renderAssetList();
+});
+
+document.getElementById('province-select').addEventListener('change', e => {
+  currentProvince = e.target.value;
+  renderAssetList();
+});
+
+// ============================================================
+// BOOT
+// ============================================================
+initLiff();
+</script>
+</body>
+</html>
