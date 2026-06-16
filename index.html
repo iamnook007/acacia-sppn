@@ -462,7 +462,19 @@
       <div class="desc">เปิดกล้อง สแกน QR บนกล่องครุภัณฑ์</div>
     </button>
 
-    <!-- Fallback link -->
+    <!-- Fallback 1: พิมพ์เลขกล่อง (กรณีกล้องสแกนไม่ได้) -->
+    <div class="card" style="padding:14px;">
+      <div class="card-title">หรือพิมพ์เลขกล่อง</div>
+      <div style="display:flex; gap:8px;">
+        <input id="box-input" class="sn-input" type="text"
+               inputmode="numeric" autocomplete="off" placeholder="เช่น 53" />
+        <button type="button" class="btn btn-primary" id="btn-box-confirm"
+                style="width:auto; padding:10px 22px;">ค้นหา</button>
+      </div>
+      <div id="box-match-list" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- Fallback 2: ลิงก์เลือกจากจังหวัด -->
     <button class="manual-pick-toggle" id="toggle-manual-pick">
       สแกนไม่ได้? เลือกจากจังหวัด
     </button>
@@ -1105,6 +1117,83 @@ function showConfirmScreen(asset) {
 }
 
 document.getElementById('btn-scan-qr').addEventListener('click', startScan);
+
+// ============================================================
+// LOOKUP BY BOX NUMBER — fallback กรณีกล้องสแกน QR ไม่ได้
+// boxNumber เก็บเป็น "NN/TTT" (เช่น "53/381")
+// เทียบแบบตัวเลข (parseInt) เพื่อให้ "053" match "53"
+// ถ้าเจอหลายเครื่อง (เลขกล่องซ้ำข้ามประเภท) → ให้เลือก
+// ============================================================
+function lookupBoxNumber() {
+  const val = document.getElementById('box-input').value.trim();
+  if (!val) return;
+
+  const wanted = parseInt(val, 10);
+  if (!Number.isInteger(wanted)) {
+    showToast('กรุณาพิมพ์เลข', 'error');
+    return;
+  }
+
+  const matches = allAssets.filter(a => {
+    const front = parseInt(String(a.boxNumber || '').split('/')[0], 10);
+    return Number.isInteger(front) && front === wanted;
+  });
+
+  const listEl = document.getElementById('box-match-list');
+
+  if (matches.length === 0) {
+    showToast(`ไม่พบกล่องเลขที่ ${wanted}`, 'error');
+    listEl.innerHTML = '';
+    return;
+  }
+
+  const available = matches.filter(a => a.status !== 'completed');
+  if (available.length === 0) {
+    showToast(`กล่อง ${wanted} ติดตั้งเสร็จแล้ว`, 'error');
+    listEl.innerHTML = '';
+    return;
+  }
+
+  if (available.length === 1) {
+    pendingAsset = available[0];
+    showConfirmScreen(available[0]);
+    document.getElementById('box-input').value = '';
+    listEl.innerHTML = '';
+    return;
+  }
+
+  // multi-match: ให้เลือกว่าเป็นเครื่องไหน (โชว์ชนิดให้แยกได้)
+  listEl.innerHTML = available.map(a => {
+    const tKey = getTemplateKey(a.deviceType);
+    const tmpl = TEMPLATES[tKey];
+    const loc  = a.location?.region === 'central'
+      ? (a.location?.office || 'ส่วนกลาง')
+      : (a.location?.province || '');
+    return `
+      <div class="asset-item" onclick="pickBoxMatch('${a.docId}')">
+        <div class="asset-badge ${getBadgeClass(a.deviceType)}">${tmpl?.label || a.deviceType}</div>
+        <div class="asset-info">
+          <div class="asset-id">กล่อง ${a.boxNumber}</div>
+          <div class="asset-loc">${loc}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function pickBoxMatch(docId) {
+  const asset = allAssets.find(a => a.docId === docId);
+  if (!asset) return;
+  pendingAsset = asset;
+  showConfirmScreen(asset);
+  document.getElementById('box-input').value = '';
+  document.getElementById('box-match-list').innerHTML = '';
+}
+
+document.getElementById('btn-box-confirm').addEventListener('click', lookupBoxNumber);
+document.getElementById('box-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); lookupBoxNumber(); }
+});
 
 // ============================================================
 // QR SCAN — ในช่อง S/N (จอ/UPS) เติม S/N อัตโนมัติ
