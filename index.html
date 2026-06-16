@@ -293,15 +293,6 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .loading-text { font-size: 0.9rem; color: var(--gray-600); }
 
-    /* ===== DIVIDER ===== */
-    .or-divider {
-      display: flex; align-items: center; gap: 10px;
-      color: var(--gray-400); font-size: 0.82rem;
-    }
-    .or-divider::before, .or-divider::after {
-      content: ''; flex: 1; height: 1px; background: var(--gray-200);
-    }
-
     /* ===== FILTER CHIPS ===== */
     .chips { display: flex; gap: 8px; flex-wrap: wrap; }
     .chip {
@@ -331,17 +322,89 @@
     }
     .select-field:focus { outline: none; border-color: var(--blue); }
 
-    /* ===== SUCCESS SCREEN ===== */
-    .success-icon {
-      width: 72px; height: 72px;
-      background: var(--green-light);
+    /* ===== RESULT SCREEN (success + error) ===== */
+    .result-icon {
+      width: 84px; height: 84px;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 2.2rem;
-      margin: 0 auto 16px;
+      font-size: 2.6rem; font-weight: 700;
+      margin: 0 auto 18px;
     }
-    .success-title { text-align: center; font-size: 1.2rem; font-weight: 700; color: var(--green); }
-    .success-sub { text-align: center; font-size: 0.85rem; color: var(--gray-600); margin-top: 4px; }
+    .result-title { text-align: center; font-size: 1.3rem; font-weight: 700; }
+    .result-asset { text-align: center; font-size: 1rem; color: var(--gray-800); margin-top: 8px; font-weight: 600; }
+    .result-loc { text-align: center; font-size: 0.85rem; color: var(--gray-600); margin-top: 2px; }
+    .result-meta { text-align: center; font-size: 0.8rem; color: var(--gray-400); margin-top: 10px; }
+    .result-error {
+      margin: 14px auto 0; padding: 10px 14px;
+      background: var(--red-light); color: var(--red);
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem; word-break: break-word; max-width: 320px; text-align: center;
+    }
+    .is-success .result-icon { background: var(--green-light); color: var(--green); }
+    .is-success .result-title { color: var(--green); }
+    .is-error   .result-icon { background: var(--red-light); color: var(--red); }
+    .is-error   .result-title { color: var(--red); }
+
+    /* ===== QR HERO (large, centered) ===== */
+    .btn-qr-large {
+      background: linear-gradient(135deg, var(--blue) 0%, #2563EB 100%);
+      color: var(--white);
+      padding: 36px 24px;
+      border-radius: var(--radius);
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      box-shadow: 0 6px 24px rgba(27,79,138,0.32);
+      width: 100%; text-align: center;
+      transition: transform 0.1s;
+    }
+    .btn-qr-large:active { transform: scale(0.98); opacity: 0.9; }
+    .btn-qr-large .icon { font-size: 4rem; line-height: 1; }
+    .btn-qr-large .title { font-size: 1.3rem; font-weight: 700; }
+    .btn-qr-large .desc { font-size: 0.85rem; opacity: 0.9; }
+
+    .manual-pick-toggle {
+      text-align: center; margin-top: 18px;
+      font-size: 0.88rem; color: var(--gray-600);
+      text-decoration: underline;
+      background: transparent; border: none; cursor: pointer;
+      width: 100%; padding: 6px;
+    }
+    .manual-pick-toggle:active { color: var(--blue); }
+
+    /* ===== CONFIRM SCREEN ===== */
+    .confirm-box-label {
+      font-size: 0.85rem; color: var(--gray-600); font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .confirm-box-number {
+      font-size: 4rem; font-weight: 800;
+      color: var(--blue); line-height: 1.1;
+      margin: 8px 0 4px;
+      letter-spacing: -0.02em;
+    }
+    .confirm-loc {
+      font-size: 1.05rem; color: var(--gray-800); font-weight: 500;
+      margin-top: 6px;
+    }
+    .confirm-hint {
+      font-size: 0.85rem; color: var(--gray-600);
+      margin-top: 18px; padding: 10px 14px;
+      background: var(--amber-light); color: var(--amber);
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+    }
+
+    /* ===== S/N SCAN BUTTON ===== */
+    .sn-scan-btn {
+      flex-shrink: 0; width: 40px; height: 40px;
+      background: var(--blue-light); color: var(--blue);
+      border: 1.5px solid transparent;
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.15rem;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .sn-scan-btn:active { background: var(--blue); color: var(--white); transform: scale(0.95); }
 
     /* ===== EMPTY STATE ===== */
     .empty { text-align: center; padding: 40px 20px; color: var(--gray-400); }
@@ -391,43 +454,70 @@
     <div class="header-avatar" id="installer-avatar">👤</div>
   </header>
 
-  <div class="content">
-    <!-- QR Hero -->
-    <button class="btn-qr" id="btn-scan-qr">
-      <div class="btn-qr-icon">📷</div>
-      <div class="btn-qr-text">
-        <strong>สแกน QR บน Sticker</strong>
-        <span>วิธีที่เร็วที่สุด — ไม่ต้องกรอกอะไร</span>
-      </div>
-      <span style="font-size:1.2rem; opacity:0.7;">›</span>
+  <div class="content" style="padding-top:32px;">
+    <!-- QR Hero (large, primary CTA) -->
+    <button class="btn-qr-large" id="btn-scan-qr">
+      <div class="icon">📷</div>
+      <div class="title">สแกน QR ที่สติกเกอร์</div>
+      <div class="desc">เปิดกล้อง สแกน QR บนกล่องครุภัณฑ์</div>
     </button>
 
-    <div class="or-divider">หรือเลือกจากรายการ</div>
+    <!-- Fallback link -->
+    <button class="manual-pick-toggle" id="toggle-manual-pick">
+      สแกนไม่ได้? เลือกจากจังหวัด
+    </button>
 
-    <!-- Filter: ส่วนกลาง / ภูมิภาค -->
-    <div class="card" style="padding:12px;">
-      <div class="chips" id="region-chips">
-        <button class="chip active" data-region="central">🏛️ ส่วนกลาง</button>
-        <button class="chip" data-region="provincial">🗺️ ภูมิภาค</button>
-      </div>
-    </div>
-
-    <!-- จังหวัด (แสดงเฉพาะภูมิภาค) -->
-    <div id="province-wrap" class="card" style="padding:12px; display:none;">
-      <select class="select-field" id="province-select">
-        <option value="">— เลือกจังหวัด —</option>
-      </select>
-    </div>
-
-    <!-- Asset List -->
-    <div class="card" style="padding:12px;">
-      <div class="card-title" id="list-title">รายการ — ส่วนกลาง</div>
-      <div id="asset-list">
-        <div class="empty">
-          <div class="empty-icon">📋</div>
-          <div class="empty-text">กำลังโหลดรายการ...</div>
+    <!-- Fallback: region/province/list (hidden by default) -->
+    <div id="manual-pick" style="display:none; flex-direction:column; gap:12px; margin-top:6px;">
+      <div class="card" style="padding:12px;">
+        <div class="chips" id="region-chips">
+          <button class="chip active" data-region="central">🏛️ ส่วนกลาง</button>
+          <button class="chip" data-region="provincial">🗺️ ภูมิภาค</button>
         </div>
       </div>
+
+      <div id="province-wrap" class="card" style="padding:12px; display:none;">
+        <select class="select-field" id="province-select">
+          <option value="">— เลือกจังหวัด —</option>
+        </select>
+      </div>
+
+      <div class="card" style="padding:12px;">
+        <div class="card-title" id="list-title">รายการ — ส่วนกลาง</div>
+        <div id="asset-list">
+          <div class="empty">
+            <div class="empty-icon">📋</div>
+            <div class="empty-text">กำลังโหลดรายการ...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================
+     SCREEN: SCAN CONFIRM (ยืนยันเครื่องหลังสแกน QR)
+====================================================== -->
+<div id="screen-confirm" class="screen">
+  <header class="header">
+    <button class="header-back" id="btn-confirm-back">‹</button>
+    <div style="flex:1;">
+      <div class="header-title">ยืนยันเครื่อง</div>
+      <div class="header-sub">ตรวจให้ตรงกับกล่องตรงหน้า</div>
+    </div>
+  </header>
+
+  <div class="content" style="justify-content:center; align-items:center; gap:24px; padding:40px 24px;">
+    <div style="text-align:center; width:100%;">
+      <div class="confirm-box-label">เลขกล่อง</div>
+      <div class="confirm-box-number" id="confirm-box-number">—</div>
+      <div class="confirm-loc" id="confirm-loc">—</div>
+      <div class="confirm-hint">⚠️ เทียบกับเลขที่สติกเกอร์บนกล่องให้ตรงกัน</div>
+    </div>
+
+    <div style="width:100%; max-width:340px; display:flex; flex-direction:column; gap:10px;">
+      <button class="btn btn-primary" id="btn-confirm-yes">✓ ใช่ เริ่มติดตั้ง</button>
+      <button class="btn btn-secondary" id="btn-confirm-rescan">🔄 สแกนใหม่</button>
     </div>
   </div>
 </div>
@@ -478,18 +568,20 @@
 </div>
 
 <!-- ======================================================
-     SCREEN: SUCCESS
+     SCREEN: RESULT (สำเร็จ/ไม่สำเร็จ — ใช้ class is-success / is-error)
 ====================================================== -->
-<div id="screen-success" class="screen">
+<div id="screen-result" class="screen is-success">
   <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px;">
-    <div class="success-icon">✓</div>
-    <div class="success-title" id="success-asset">PC-000</div>
-    <div class="success-sub" id="success-loc">—</div>
-    <div style="margin-top:8px; font-size:0.8rem; color:var(--gray-400);" id="success-time">—</div>
+    <div class="result-icon" id="result-icon">✓</div>
+    <div class="result-title" id="result-title">บันทึกสำเร็จ</div>
+    <div class="result-asset" id="result-asset">—</div>
+    <div class="result-loc" id="result-loc">—</div>
+    <div class="result-meta" id="result-meta">—</div>
+    <div class="result-error" id="result-error" style="display:none;">—</div>
 
-    <div style="margin-top:32px; width:100%; max-width:320px; display:flex; flex-direction:column; gap:10px;">
-      <button class="btn btn-primary" id="btn-next-asset">ติดตั้งเครื่องถัดไป</button>
-      <button class="btn btn-secondary" id="btn-back-home">กลับหน้าหลัก</button>
+    <div style="margin-top:32px; width:100%; max-width:340px; display:flex; flex-direction:column; gap:10px;">
+      <button class="btn btn-primary" id="btn-result-primary">—</button>
+      <button class="btn btn-secondary" id="btn-result-secondary">กลับหน้าหลัก</button>
     </div>
   </div>
 </div>
@@ -510,6 +602,10 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
+<!-- PDF libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
 // ============================================================
@@ -523,7 +619,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '846071482521',
   appId:             '1:846071482521:web:00f846689dec1029d0d008',
 };
-const LIFF_ID = '2010384567-I6cKE9HG'
+const LIFF_ID = '2010384567-I6cKE9HG';
 
 // ============================================================
 // TEMPLATE DEFINITIONS
@@ -650,7 +746,8 @@ const DEVICE_TEMPLATE = {
 // STATE
 // ============================================================
 let installer = { lineUserId: '', name: '', pictureUrl: '' };
-let currentAsset = null;     // Firestore doc
+let currentAsset = null;     // Firestore doc (กำลังติดตั้ง)
+let pendingAsset = null;     // Firestore doc (รอยืนยันบนหน้า confirm)
 let photos = {};             // { slotKey: File }
 let serialNumbers = {};      // { pc, monitor, ups }
 let currentRegion = 'central';
@@ -661,8 +758,10 @@ let allAssets = [];
 // FIREBASE INIT
 // ============================================================
 firebase.initializeApp(FIREBASE_CONFIG);
-const db      = firebase.firestore();
-const storage = firebase.storage();
+const db        = firebase.firestore();
+const storage   = firebase.storage();
+const functions = firebase.functions();
+functions.region = 'asia-southeast1';
 
 // ============================================================
 // HELPERS
@@ -821,13 +920,18 @@ function openInstallScreen(asset) {
   photos = {};
   serialNumbers = {};
 
+  // reset submit button (อาจค้างจาก cycle ก่อนหน้า)
+  const btn = document.getElementById('btn-submit');
+  btn.disabled  = true;
+  btn.innerHTML = '<span>✓</span> ส่งข้อมูล';
+
   const tKey = getTemplateKey(asset.deviceType);
   const tmpl = TEMPLATES[tKey];
   const loc  = asset.location?.region === 'central'
     ? (asset.location?.office || 'ส่วนกลาง')
     : (asset.location?.province || '');
 
-  document.getElementById('install-title').textContent = asset.assetId;
+  document.getElementById('install-title').textContent = `กล่อง ${asset.boxNumber || asset.assetId}`;
   document.getElementById('install-loc').textContent = loc;
   document.getElementById('install-template-badge').textContent = tKey;
   document.getElementById('install-template-badge').className = `asset-badge ${getBadgeClass(asset.deviceType)}`;
@@ -868,16 +972,21 @@ function renderInstallContent(tKey, tmpl) {
     html += `</div>`;
   });
 
-  // S/N fields
+  // S/N fields — monitor และ ups มีปุ่มสแกน QR เพิ่มเติม (กันถ่ายผิดเครื่อง)
   html += `<div class="card">`;
   html += `<div class="card-title">Serial Numbers</div>`;
   tmpl.snFields.forEach(f => {
     const preVal = serialNumbers[f.key] || '';
     const cls    = preVal ? 'sn-input auto-filled' : 'sn-input';
+    const scannable = (f.key === 'monitor' || f.key === 'ups');
+    const scanBtn = scannable
+      ? `<button type="button" class="sn-scan-btn" onclick="scanSnForField('${f.key}')" title="สแกน QR สติกเกอร์${f.label}">📷</button>`
+      : '';
     html += `
       <div class="sn-row">
         <div class="sn-label">${f.label}</div>
         <input class="${cls}" id="sn-${f.key}" type="text" value="${preVal}" placeholder="กรอก S/N หรือสแกน QR" oninput="checkSubmitReady()" />
+        ${scanBtn}
       </div>
     `;
   });
@@ -956,14 +1065,14 @@ function checkSubmitReady() {
 }
 
 // ============================================================
-// QR SCAN
+// QR SCAN — entry point จาก home / result / confirm "สแกนใหม่"
+// QR format: "AssetID|SN"  เช่น "PC-053|SNABCXYZ"
 // ============================================================
-document.getElementById('btn-scan-qr').addEventListener('click', async () => {
+async function startScan() {
   try {
     const result = await liff.scanCodeV2();
     if (!result?.value) return;
 
-    // QR format: "AssetID|SN"  เช่น "PC-053|SNABCXYZ"
     const parts   = result.value.split('|');
     const assetId = parts[0]?.trim();
     const sn      = parts[1]?.trim() || '';
@@ -978,32 +1087,93 @@ document.getElementById('btn-scan-qr').addEventListener('click', async () => {
       return;
     }
     asset._qrSN = sn;
-    openInstallScreen(asset);
+    pendingAsset = asset;
+    showConfirmScreen(asset);
   } catch (err) {
     console.error(err);
     showToast('สแกน QR ไม่สำเร็จ', 'error');
   }
-});
+}
+
+function showConfirmScreen(asset) {
+  document.getElementById('confirm-box-number').textContent = asset.boxNumber || asset.assetId || '—';
+  const loc = asset.location?.region === 'central'
+    ? (asset.location?.office || 'ส่วนกลาง')
+    : (asset.location?.province || '');
+  document.getElementById('confirm-loc').textContent = loc;
+  showScreen('confirm');
+}
+
+document.getElementById('btn-scan-qr').addEventListener('click', startScan);
 
 // ============================================================
-// SUBMIT
+// QR SCAN — ในช่อง S/N (จอ/UPS) เติม S/N อัตโนมัติ
+// เช็คว่า AssetID ใน QR ตรงกับเครื่องที่กำลังทำ ป้องกันสแกนผิดเครื่อง
 // ============================================================
-document.getElementById('btn-submit').addEventListener('click', async () => {
+async function scanSnForField(fieldKey) {
+  if (!currentAsset) return;
+  try {
+    const result = await liff.scanCodeV2();
+    if (!result?.value) return;
+
+    const parts          = result.value.split('|');
+    const scannedAssetId = parts[0]?.trim();
+    const sn             = parts[1]?.trim() || '';
+
+    if (scannedAssetId !== currentAsset.assetId) {
+      showToast(`QR นี้เป็นของ ${scannedAssetId} ไม่ตรงกับ ${currentAsset.assetId}`, 'error');
+      return;
+    }
+    if (!sn) {
+      showToast('QR ไม่มี S/N', 'error');
+      return;
+    }
+    const input = document.getElementById(`sn-${fieldKey}`);
+    if (input) {
+      input.value = sn;
+      input.classList.add('auto-filled');
+      serialNumbers[fieldKey] = sn;
+      checkSubmitReady();
+      showToast('เติม S/N เรียบร้อย', 'success');
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('สแกน QR ไม่สำเร็จ', 'error');
+  }
+}
+
+// ============================================================
+// SUBMIT — เรียกได้ทั้งจากปุ่ม "ส่งข้อมูล" และ "ลองส่งใหม่" บนจอแดง
+// photos + serialNumbers + currentAsset ยังอยู่ใน state เดิม
+// Storage path เป็น deterministic — retry เขียนทับไฟล์เดิม ไม่มี orphan
+// ============================================================
+async function submitInstallation() {
   if (!currentAsset) return;
   const tKey = getTemplateKey(currentAsset.deviceType);
   const tmpl = TEMPLATES[tKey];
 
-  // collect S/N
+  // collect S/N (เก็บค่าจาก input ลง state — สำคัญตอน retry หลังกลับมาจากจอแดง)
   tmpl.snFields.forEach(f => {
     const el = document.getElementById(`sn-${f.key}`);
     if (el) serialNumbers[f.key] = el.value.trim();
   });
 
+  // กันกดซ้ำ + แสดง "กำลังอัป..."
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> กำลังอัป...';
+
   // mark uploading
-  await db.collection('installations').doc(currentAsset.docId).update({ status: 'uploading' });
+  try {
+    await db.collection('installations').doc(currentAsset.docId).update({ status: 'uploading' });
+  } catch (err) {
+    console.error(err);
+    showResult({ state: 'error', error: 'อัปเดตสถานะไม่สำเร็จ — เช็คเน็ตแล้วลองใหม่' });
+    return;
+  }
 
   showScreen('uploading');
-  document.getElementById('upload-asset-label').textContent = currentAsset.assetId;
+  document.getElementById('upload-asset-label').textContent = `กล่อง ${currentAsset.boxNumber || currentAsset.assetId}`;
   const loc = currentAsset.location?.region === 'central'
     ? (currentAsset.location?.office || 'ส่วนกลาง')
     : (currentAsset.location?.province || '');
@@ -1015,6 +1185,8 @@ document.getElementById('btn-submit').addEventListener('click', async () => {
   steps.innerHTML = allSlots.map(s =>
     `<div class="upload-step"><div class="upload-step-dot" id="dot-${s.key}"></div><div class="upload-step-label" id="lbl-${s.key}">${s.label}</div></div>`
   ).join('') + `<div class="upload-step"><div class="upload-step-dot" id="dot-firestore"></div><div class="upload-step-label" id="lbl-firestore">บันทึกข้อมูล</div></div>`;
+  document.getElementById('upload-progress').style.width = '0%';
+  document.getElementById('upload-progress-label').textContent = '0%';
 
   try {
     const photoUrls = {};
@@ -1026,7 +1198,7 @@ document.getElementById('btn-submit').addEventListener('click', async () => {
       document.getElementById(`lbl-${slot.key}`).className = 'upload-step-label active';
 
       const file = photos[slot.key];
-      // filename convention: PC-053_01_install.jpg
+      if (!file) throw new Error(`ไม่มีรูปสำหรับ ${slot.key} — กลับไปถ่ายใหม่`);
       const idx  = String(allSlots.indexOf(slot) + 1).padStart(2, '0');
       const path = `installations/${currentAsset.assetId}/${idx}_${slot.key}.jpg`;
       const ref  = storage.ref(path);
@@ -1058,22 +1230,61 @@ document.getElementById('btn-submit').addEventListener('click', async () => {
     document.getElementById('dot-firestore').className = 'upload-step-dot done';
     document.getElementById('lbl-firestore').className = 'upload-step-label done';
 
-    // success screen
-    document.getElementById('success-asset').textContent = currentAsset.assetId;
-    document.getElementById('success-loc').textContent = loc;
-    document.getElementById('success-time').textContent = new Date().toLocaleString('th-TH');
-    showScreen('success');
-
-    // refresh list (background)
-    loadAssets();
+    showResult({ state: 'success' });
+    loadAssets();   // refresh background
 
   } catch (err) {
     console.error(err);
-    await db.collection('installations').doc(currentAsset.docId).update({ status: 'pending' });
-    showToast('อัปโหลดไม่สำเร็จ — กรุณาลองใหม่', 'error');
-    showScreen('install');
+    // ไม่ reset status เป็น pending — ทิ้งไว้ที่ 'uploading' เพื่อให้ admin เห็นว่ามีอันค้าง
+    // photos/serialNumbers/currentAsset ยังอยู่ครบใน global state — ปุ่ม "ลองส่งใหม่" เรียก submitInstallation() ได้เลย
+    showResult({ state: 'error', error: err.message || 'อัปโหลดไม่สำเร็จ' });
   }
-});
+}
+
+document.getElementById('btn-submit').addEventListener('click', submitInstallation);
+
+// ============================================================
+// RESULT SCREEN — เขียว (success) / แดง (error)
+// ============================================================
+function showResult({ state, error }) {
+  const screen = document.getElementById('screen-result');
+  screen.classList.remove('is-success', 'is-error');
+  screen.classList.add(state === 'error' ? 'is-error' : 'is-success');
+
+  const loc = currentAsset?.location?.region === 'central'
+    ? (currentAsset.location?.office || 'ส่วนกลาง')
+    : (currentAsset?.location?.province || '');
+  const boxLabel = currentAsset ? `กล่อง ${currentAsset.boxNumber || currentAsset.assetId}` : '—';
+
+  const primaryBtn = document.getElementById('btn-result-primary');
+  const errorBox   = document.getElementById('result-error');
+
+  if (state === 'success') {
+    document.getElementById('result-icon').textContent  = '✓';
+    document.getElementById('result-title').textContent = 'บันทึกสำเร็จ';
+    document.getElementById('result-asset').textContent = boxLabel;
+    document.getElementById('result-loc').textContent   = loc;
+    document.getElementById('result-meta').textContent  = new Date().toLocaleString('th-TH');
+    errorBox.style.display = 'none';
+    primaryBtn.textContent = '📷 สแกนเครื่องถัดไป';
+    primaryBtn.onclick     = startScan;
+  } else {
+    document.getElementById('result-icon').textContent  = '✕';
+    document.getElementById('result-title').textContent = 'อัปไม่สำเร็จ';
+    document.getElementById('result-asset').textContent = boxLabel;
+    document.getElementById('result-loc').textContent   = loc;
+    document.getElementById('result-meta').textContent  = 'รูปที่ถ่ายยังอยู่ครบ — กดลองใหม่ได้';
+    if (error) {
+      errorBox.textContent  = error;
+      errorBox.style.display = '';
+    } else {
+      errorBox.style.display = 'none';
+    }
+    primaryBtn.textContent = '🔄 ลองส่งใหม่';
+    primaryBtn.onclick     = submitInstallation;
+  }
+  showScreen('result');
+}
 
 // ============================================================
 // NAVIGATION
@@ -1084,8 +1295,26 @@ document.getElementById('btn-back-install').addEventListener('click', () => {
   showScreen('home');
 });
 
-document.getElementById('btn-next-asset').addEventListener('click', () => showScreen('home'));
-document.getElementById('btn-back-home').addEventListener('click', () => showScreen('home'));
+// Confirm screen
+document.getElementById('btn-confirm-back').addEventListener('click', () => {
+  pendingAsset = null;
+  showScreen('home');
+});
+document.getElementById('btn-confirm-yes').addEventListener('click', () => {
+  if (!pendingAsset) return;
+  openInstallScreen(pendingAsset);
+  pendingAsset = null;
+});
+document.getElementById('btn-confirm-rescan').addEventListener('click', startScan);
+
+// Result screen — secondary = back to home (สำหรับทั้ง success และ error)
+document.getElementById('btn-result-secondary').addEventListener('click', () => showScreen('home'));
+
+// Home — toggle manual pick fallback
+document.getElementById('toggle-manual-pick').addEventListener('click', () => {
+  const wrap = document.getElementById('manual-pick');
+  wrap.style.display = (wrap.style.display === 'none' || !wrap.style.display) ? 'flex' : 'none';
+});
 
 // ============================================================
 // REGION / PROVINCE FILTERS
