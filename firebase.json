@@ -7,7 +7,14 @@
       "**/node_modules/**",
       "serviceAccount.json",
       "serviceAccount*.json",
-      "*-credentials.json"
+      "*-credentials.json",
+      "*.xlsx",
+      "cors.json",
+      "package*.json",
+      "import-firestore.js",
+      "setCors.js",
+      "clear-firestore.js",
+      "functions/**"
     ],
     "headers": [
       {
