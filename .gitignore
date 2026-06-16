@@ -67,3 +67,8 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# Credentials — NEVER commit
+serviceAccount.json
+serviceAccount*.json
+*-credentials.json
