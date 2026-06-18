@@ -91,17 +91,55 @@
   .status-flagged{color:var(--red);font-weight:700}
 
   .summary-card{background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:24px;display:flex;gap:32px;align-items:center;flex-wrap:wrap}
-  .summary-card .donut-wrap{position:relative;width:200px;height:200px;flex-shrink:0}
-  .summary-card .donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-  .summary-card .donut-pct{font-size:2.4rem;font-weight:700;color:var(--blue);line-height:1}
-  .summary-card .donut-label{font-size:0.8rem;color:var(--gray-600);margin-top:4px}
-  .summary-card .legend{flex:1;min-width:240px;display:flex;flex-direction:column;gap:14px}
-  .summary-card .legend-row{display:flex;align-items:center;gap:12px}
-  .summary-card .legend-dot{width:14px;height:14px;border-radius:4px;flex-shrink:0}
-  .summary-card .legend-txt{flex:1;font-size:0.95rem;font-weight:600;color:var(--gray-800)}
-  .summary-card .legend-num{font-size:1.1rem;font-weight:700}
   .summary-card .summary-title{width:100%;font-size:1.05rem;font-weight:700;color:var(--gray-800);margin-bottom:-8px}
-  .summary-card .summary-date{font-size:0.82rem;color:var(--gray-400);font-weight:500}
+
+  /* === Progress summary === */
+  .progress-summary{background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:24px}
+  .ps-head{padding-bottom:16px;border-bottom:1px solid var(--gray-200);margin-bottom:18px}
+  .ps-title{font-size:1.15rem;font-weight:700;color:var(--gray-800);margin-bottom:6px}
+  .ps-sub{font-size:0.92rem;color:var(--gray-600);line-height:1.5}
+  .ps-sub strong{color:var(--gray-800);font-weight:700}
+  .ps-region-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px}
+  @media (max-width:760px){.ps-region-grid{grid-template-columns:1fr}}
+  .region-card{border:1.5px solid var(--gray-200);border-radius:12px;padding:18px;background:var(--gray-50)}
+  .region-card.region-central{border-top:4px solid var(--blue)}
+  .region-card.region-provincial{border-top:4px solid var(--green)}
+  .rc-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .rc-icon{width:34px;height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:8px}
+  .region-card.region-central .rc-icon{color:var(--blue);background:var(--blue-light)}
+  .region-card.region-provincial .rc-icon{color:var(--green);background:var(--green-light)}
+  .rc-icon svg{width:20px;height:20px}
+  .rc-title{flex:1;font-size:1rem;font-weight:700;color:var(--gray-800)}
+  .rc-title .rc-sub{font-size:0.82rem;color:var(--gray-400);font-weight:500;margin-left:4px}
+  .rc-pill{background:#fff;border:1px solid var(--gray-200);padding:4px 10px;border-radius:999px;font-size:0.78rem;font-weight:600;color:var(--gray-600)}
+  .rc-main{background:#fff;border-radius:8px;padding:14px 16px;margin-bottom:14px}
+  .rc-bigrow{display:flex;align-items:baseline;gap:6px;margin-bottom:10px}
+  .rc-bignum{font-size:2.2rem;font-weight:700;line-height:1;color:var(--gray-800)}
+  .rc-bigden{font-size:1rem;color:var(--gray-400);font-weight:600}
+  .rc-pct{margin-left:auto;font-size:1rem;font-weight:700;padding:4px 10px;border-radius:6px}
+  .region-card.region-central .rc-pct{color:var(--blue);background:var(--blue-light)}
+  .region-card.region-provincial .rc-pct{color:var(--green);background:var(--green-light)}
+  .rc-bar{height:8px;background:var(--gray-200);border-radius:999px;overflow:hidden}
+  .rc-bar-fill{height:100%;border-radius:999px;width:0;transition:width 0.4s ease}
+  .region-card.region-central .rc-bar-fill{background:var(--blue)}
+  .region-card.region-provincial .rc-bar-fill{background:var(--green)}
+  .rc-breakdown{display:flex;flex-direction:column;gap:2px}
+  .bd-row{display:flex;justify-content:space-between;align-items:center;font-size:0.9rem;padding:8px 6px;border-bottom:1px dashed var(--gray-200)}
+  .bd-row:last-child{border-bottom:none}
+  .bd-label{color:var(--gray-600);font-weight:500}
+  .bd-num{color:var(--gray-800);font-weight:600}
+  .bd-num strong{font-size:1rem;font-weight:700}
+  .bd-num .den{color:var(--gray-400);font-weight:500;margin-left:2px}
+  .ps-note{font-size:0.8rem;color:var(--gray-600);padding:10px 14px;background:var(--gray-50);border-left:3px solid var(--gray-400);border-radius:4px;margin:14px 0 18px;line-height:1.6}
+  .ps-device-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+  .dev-card{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;padding:14px}
+  .dev-label{font-size:0.85rem;color:var(--gray-600);font-weight:600;margin-bottom:6px}
+  .dev-numrow{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+  .dev-num{font-size:1.4rem;color:var(--gray-800);font-weight:700}
+  .dev-num .den{font-size:0.9rem;color:var(--gray-400);font-weight:600}
+  .dev-pct{font-size:0.85rem;font-weight:700;color:var(--gray-600)}
+  .dev-bar{height:6px;background:var(--gray-200);border-radius:999px;overflow:hidden}
+  .dev-bar-fill{height:100%;background:var(--blue);border-radius:999px;width:0;transition:width 0.4s ease}
   .loading{text-align:center;padding:40px;color:var(--gray-400)}
   .spinner{width:36px;height:36px;border:3px solid var(--gray-200);border-top-color:var(--blue);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px}
   @keyframes spin{to{transform:rotate(360deg)}}
@@ -120,20 +158,95 @@
 </div>
 
 <div class="container">
-  <!-- SUMMARY DONUT (สำหรับ capture ส่งลูกค้า) -->
-  <div class="summary-card" id="summary-card">
-    <div class="summary-title">สรุปความคืบหน้าโครงการ <span class="summary-date" id="summary-date"></span></div>
-    <div class="donut-wrap">
-      <svg width="200" height="200" viewBox="0 0 200 200" id="donut-svg">
-        <circle cx="100" cy="100" r="80" fill="none" stroke="#F1F5F9" stroke-width="28"/>
-      </svg>
-      <div class="donut-center">
-        <div class="donut-pct" id="donut-pct">—</div>
-        <div class="donut-label">เสร็จสิ้น</div>
+  <!-- PROGRESS SUMMARY — central vs provincial + device-type aggregate -->
+  <section class="progress-summary" id="progress-summary">
+    <div class="ps-head">
+      <h2 class="ps-title">สรุปความคืบหน้าโครงการ</h2>
+      <div class="ps-sub">
+        ทั้งโครงการ <strong>541</strong> รายการ ·
+        ติดตั้งแล้ว <strong id="ps-done">—</strong> (<strong id="ps-pct">—</strong>) ·
+        มีภาพต้องแก้ <strong id="ps-flagged">—</strong>
       </div>
     </div>
-    <div class="legend" id="donut-legend"></div>
-  </div>
+
+    <div class="ps-region-grid">
+      <!-- ส่วนกลาง (กทม.) -->
+      <div class="region-card region-central">
+        <div class="rc-head">
+          <div class="rc-icon" title="building-bank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 6l7-3 7 3"/><path d="M4 10v11"/><path d="M20 10v11"/><path d="M8 14v3"/><path d="M12 14v3"/><path d="M16 14v3"/></svg>
+          </div>
+          <div class="rc-title">ส่วนกลาง <span class="rc-sub">(กทม.)</span></div>
+          <div class="rc-pill">9 หน่วยงาน</div>
+        </div>
+        <div class="rc-main">
+          <div class="rc-bigrow">
+            <span class="rc-bignum" id="reg-central-done">—</span>
+            <span class="rc-bigden">/ 135</span>
+            <span class="rc-pct" id="reg-central-pct">—</span>
+          </div>
+          <div class="rc-bar"><div class="rc-bar-fill" id="reg-central-bar"></div></div>
+        </div>
+        <div class="rc-breakdown">
+          <div class="bd-row"><span class="bd-label">PC แบบ 1</span><span class="bd-num"><strong id="bd-central-pc1">—</strong><span class="den">/118</span></span></div>
+          <div class="bd-row"><span class="bd-label">PC แบบ 2 สเปกพิเศษ</span><span class="bd-num"><strong id="bd-central-pc2">—</strong><span class="den">/3</span></span></div>
+          <div class="bd-row"><span class="bd-label">Notebook</span><span class="bd-num"><strong id="bd-central-nb">—</strong><span class="den">/10</span></span></div>
+          <div class="bd-row"><span class="bd-label">Tablet (iPad)</span><span class="bd-num"><strong id="bd-central-tab">—</strong><span class="den">/4</span></span></div>
+        </div>
+      </div>
+
+      <!-- ภูมิภาค (76 จังหวัด) -->
+      <div class="region-card region-provincial">
+        <div class="rc-head">
+          <div class="rc-icon" title="map-2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3z"/><path d="M9 4v13"/><path d="M15 7v13"/></svg>
+          </div>
+          <div class="rc-title">ภูมิภาค <span class="rc-sub">(76 จังหวัด)</span></div>
+          <div class="rc-pill">5 ทีม</div>
+        </div>
+        <div class="rc-main">
+          <div class="rc-bigrow">
+            <span class="rc-bignum" id="reg-provincial-done">—</span>
+            <span class="rc-bigden">/ 406</span>
+            <span class="rc-pct" id="reg-provincial-pct">—</span>
+          </div>
+          <div class="rc-bar"><div class="rc-bar-fill" id="reg-provincial-bar"></div></div>
+        </div>
+        <div class="rc-breakdown">
+          <div class="bd-row"><span class="bd-label">PC แบบ 1</span><span class="bd-num"><strong id="bd-provincial-pc1">—</strong><span class="den">/263</span></span></div>
+          <div class="bd-row"><span class="bd-label">Notebook</span><span class="bd-num"><strong id="bd-provincial-nb">—</strong><span class="den">/67</span></span></div>
+          <div class="bd-row"><span class="bd-label">UPS 2kVA network</span><span class="bd-num"><strong id="bd-provincial-ups">—</strong><span class="den">/76</span></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ps-note">
+      UPS 800VA (384) นับรวมในงาน PC แล้ว · UPS 2kVA 76 ตัวเป็นงานแยก (5 สถานที่มีแต่ UPS อย่างเดียว)
+    </div>
+
+    <div class="ps-device-grid">
+      <div class="dev-card">
+        <div class="dev-label">PC (แบบ1+2)</div>
+        <div class="dev-numrow"><span class="dev-num"><strong id="dev-pc">—</strong> <span class="den">/ 384</span></span><span class="dev-pct" id="dev-pc-pct">—</span></div>
+        <div class="dev-bar"><div class="dev-bar-fill" id="dev-pc-bar"></div></div>
+      </div>
+      <div class="dev-card">
+        <div class="dev-label">Notebook</div>
+        <div class="dev-numrow"><span class="dev-num"><strong id="dev-nb">—</strong> <span class="den">/ 77</span></span><span class="dev-pct" id="dev-nb-pct">—</span></div>
+        <div class="dev-bar"><div class="dev-bar-fill" id="dev-nb-bar"></div></div>
+      </div>
+      <div class="dev-card">
+        <div class="dev-label">Tablet</div>
+        <div class="dev-numrow"><span class="dev-num"><strong id="dev-tab">—</strong> <span class="den">/ 4</span></span><span class="dev-pct" id="dev-tab-pct">—</span></div>
+        <div class="dev-bar"><div class="dev-bar-fill" id="dev-tab-bar"></div></div>
+      </div>
+      <div class="dev-card">
+        <div class="dev-label">UPS 2kVA</div>
+        <div class="dev-numrow"><span class="dev-num"><strong id="dev-ups">—</strong> <span class="den">/ 76</span></span><span class="dev-pct" id="dev-ups-pct">—</span></div>
+        <div class="dev-bar"><div class="dev-bar-fill" id="dev-ups-bar"></div></div>
+      </div>
+    </div>
+  </section>
 
   <!-- PROVINCE PROGRESS MAP -->
   <div class="summary-card" id="map-card" style="align-items:flex-start">
@@ -232,15 +345,6 @@
         </div>
       </div>
     </div>
-  </div>
-
-  <!-- STATS -->
-  <div class="stats" id="stats">
-    <div class="stat-card"><div class="stat-label">ทั้งหมด</div><div class="stat-value blue" id="stat-total">—</div><div class="stat-sub">รายการ</div></div>
-    <div class="stat-card"><div class="stat-label">ติดตั้งแล้ว</div><div class="stat-value green" id="stat-done">—</div><div class="stat-sub" id="stat-done-pct">—</div></div>
-    <div class="stat-card"><div class="stat-label">รอติดตั้ง</div><div class="stat-value amber" id="stat-pending">—</div><div class="stat-sub">รายการ</div></div>
-    <div class="stat-card"><div class="stat-label">วันนี้</div><div class="stat-value blue" id="stat-today">—</div><div class="stat-sub">ติดตั้งวันนี้</div></div>
-    <div class="stat-card"><div class="stat-label">ภาพต้องแก้</div><div class="stat-value" id="stat-flagged" style="color:var(--red)">—</div><div class="stat-sub">รายการติดธง</div></div>
   </div>
 
   <!-- TABS แบ่งประเภท -->
@@ -392,25 +496,60 @@ async function loadData(){
 function renderStats(){
   const total = allAssets.length;
   const done = allAssets.filter(a=>a.status==='completed').length;
-  const pending = total - done;
-  const today = new Date(); today.setHours(0,0,0,0);
-  const todayCount = allAssets.filter(a=>{
-    if(!a.completedAt)return false;
-    const d=a.completedAt.toDate?a.completedAt.toDate():new Date(a.completedAt);
-    return d>=today;
-  }).length;
+  const flaggedCount = allAssets.filter(a=>a.flags && Object.keys(a.flags).length>0).length;
 
-  document.getElementById('stat-total').textContent=total;
-  document.getElementById('stat-done').textContent=done;
-  document.getElementById('stat-done-pct').textContent=total?Math.round(done/total*100)+'% เสร็จสิ้น':'—';
-  document.getElementById('stat-pending').textContent=pending;
-  document.getElementById('stat-today').textContent=todayCount;
+  const pct = (d,t) => t ? Math.round(d/t*100) : 0;
 
-  // นับจำนวนที่มีภาพต้องแก้
-  const flaggedCount=allAssets.filter(a=>a.flags&&Object.keys(a.flags).length>0).length;
-  document.getElementById('stat-flagged').textContent=flaggedCount;
-  renderDonut(total, done, pending, flaggedCount);
-  // นับจำนวนแต่ละประเภทสำหรับ tab
+  // ===== Header subline =====
+  document.getElementById('ps-done').textContent = done;
+  document.getElementById('ps-pct').textContent = total ? pct(done,total)+'%' : '—';
+  document.getElementById('ps-flagged').textContent = flaggedCount;
+
+  // ===== Region × device — completed counts only =====
+  const doneBy = (region, dev) =>
+    allAssets.filter(a => a.location?.region===region && a.deviceType===dev && a.status==='completed').length;
+
+  const c = { PC1:doneBy('central','PC1'), PC2:doneBy('central','PC2'), NB:doneBy('central','Notebook'), TAB:doneBy('central','Tablet') };
+  const p = { PC1:doneBy('provincial','PC1'), NB:doneBy('provincial','Notebook'), UPS:doneBy('provincial','UPS2k') };
+
+  const TOTALS = { centralAll:135, provincialAll:406, pcAll:384, nbAll:77, tabAll:4, upsAll:76 };
+
+  const centralDone = c.PC1+c.PC2+c.NB+c.TAB;
+  document.getElementById('reg-central-done').textContent = centralDone;
+  document.getElementById('reg-central-pct').textContent = pct(centralDone, TOTALS.centralAll)+'%';
+  document.getElementById('reg-central-bar').style.width = pct(centralDone, TOTALS.centralAll)+'%';
+  document.getElementById('bd-central-pc1').textContent = c.PC1;
+  document.getElementById('bd-central-pc2').textContent = c.PC2;
+  document.getElementById('bd-central-nb').textContent  = c.NB;
+  document.getElementById('bd-central-tab').textContent = c.TAB;
+
+  const provincialDone = p.PC1+p.NB+p.UPS;
+  document.getElementById('reg-provincial-done').textContent = provincialDone;
+  document.getElementById('reg-provincial-pct').textContent = pct(provincialDone, TOTALS.provincialAll)+'%';
+  document.getElementById('reg-provincial-bar').style.width = pct(provincialDone, TOTALS.provincialAll)+'%';
+  document.getElementById('bd-provincial-pc1').textContent = p.PC1;
+  document.getElementById('bd-provincial-nb').textContent  = p.NB;
+  document.getElementById('bd-provincial-ups').textContent = p.UPS;
+
+  // ===== Device aggregate (all regions) =====
+  const devPc  = c.PC1+c.PC2+p.PC1;
+  const devNb  = c.NB+p.NB;
+  const devTab = c.TAB;
+  const devUps = p.UPS;
+  document.getElementById('dev-pc').textContent = devPc;
+  document.getElementById('dev-pc-pct').textContent = pct(devPc, TOTALS.pcAll)+'%';
+  document.getElementById('dev-pc-bar').style.width = pct(devPc, TOTALS.pcAll)+'%';
+  document.getElementById('dev-nb').textContent = devNb;
+  document.getElementById('dev-nb-pct').textContent = pct(devNb, TOTALS.nbAll)+'%';
+  document.getElementById('dev-nb-bar').style.width = pct(devNb, TOTALS.nbAll)+'%';
+  document.getElementById('dev-tab').textContent = devTab;
+  document.getElementById('dev-tab-pct').textContent = pct(devTab, TOTALS.tabAll)+'%';
+  document.getElementById('dev-tab-bar').style.width = pct(devTab, TOTALS.tabAll)+'%';
+  document.getElementById('dev-ups').textContent = devUps;
+  document.getElementById('dev-ups-pct').textContent = pct(devUps, TOTALS.upsAll)+'%';
+  document.getElementById('dev-ups-bar').style.width = pct(devUps, TOTALS.upsAll)+'%';
+
+  // ===== Tab counts (kept) =====
   const cntPc=allAssets.filter(a=>a.deviceType==='PC1'||a.deviceType==='PC2').length;
   const cntNb=allAssets.filter(a=>a.deviceType==='Notebook').length;
   const cntTab=allAssets.filter(a=>a.deviceType==='Tablet').length;
@@ -420,48 +559,6 @@ function renderStats(){
   document.getElementById('cnt-nb').textContent=cntNb;
   document.getElementById('cnt-tab').textContent=cntTab;
   document.getElementById('cnt-ups').textContent=cntUps;
-}
-
-function renderDonut(total, done, pending, flagged){
-  // done ที่สมบูรณ์ (ไม่ติดธง) = done - flagged
-  const doneClean = Math.max(0, done - flagged);
-  const segments = [
-    { label:'ติดตั้งสมบูรณ์', value:doneClean, color:'#1A7A4A' },
-    { label:'มีภาพต้องแก้',  value:flagged,   color:'#DC2626' },
-    { label:'รอติดตั้ง',      value:pending,   color:'#D97706' },
-  ];
-  const pct = total ? Math.round(done/total*100) : 0;
-  document.getElementById('donut-pct').textContent = pct+'%';
-
-  // วาด donut ด้วย stroke-dasharray
-  const r=80, cx=100, cy=100;
-  const circ=2*Math.PI*r;
-  let offset=0;
-  let svgParts='<circle cx="100" cy="100" r="80" fill="none" stroke="#F1F5F9" stroke-width="28"/>';
-  segments.forEach(s=>{
-    if(s.value<=0 || total===0) return;
-    const frac=s.value/total;
-    const dash=frac*circ;
-    svgParts+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.color}" stroke-width="28" stroke-dasharray="${dash} ${circ-dash}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"/>`;
-    offset+=dash;
-  });
-  document.getElementById('donut-svg').innerHTML=svgParts;
-
-  // legend
-  document.getElementById('donut-legend').innerHTML=segments.map(s=>`
-    <div class="legend-row">
-      <div class="legend-dot" style="background:${s.color}"></div>
-      <div class="legend-txt">${s.label}</div>
-      <div class="legend-num" style="color:${s.color}">${s.value} <span style="font-size:0.8rem;color:#94A3B8;font-weight:600">(${total?Math.round(s.value/total*100):0}%)</span></div>
-    </div>`).join('') + `
-    <div class="legend-row" style="border-top:1px solid #E2E8F0;padding-top:12px;margin-top:2px">
-      <div class="legend-dot" style="background:#1B4F8A"></div>
-      <div class="legend-txt">ทั้งหมด</div>
-      <div class="legend-num" style="color:#1B4F8A">${total}</div>
-    </div>`;
-
-  // วันที่
-  document.getElementById('summary-date').textContent='ณ วันที่ '+new Date().toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'});
 }
 
 let currentTypeTab = '';
