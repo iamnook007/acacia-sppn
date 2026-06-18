@@ -1,0 +1,28 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    match /installations/{assetId}/{fileName} {
+      function signedIn() {
+        return request.auth != null;
+      }
+
+      function validImageUpload() {
+        return request.resource.size < 5 * 1024 * 1024
+            && request.resource.contentType.matches('image/.*')
+            && fileName.matches('^[0-9]{2}_[a-zA-Z]+\\.jpg$');
+      }
+
+      allow read: if true;
+
+      allow create: if signedIn() && validImageUpload();
+      allow update: if signedIn() && validImageUpload();
+      allow delete: if false;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

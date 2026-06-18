@@ -1,0 +1,45 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /installations/{id} {
+      function signedIn() {
+        return request.auth != null;
+      }
+
+      function onlyAllowedFields() {
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status',
+          'photos',
+          'serialNumbers',
+          'installer',
+          'completedAt',
+          'exported',
+          'exportedAt',
+          'flags'
+        ]);
+      }
+
+      function statusTransitionOk() {
+        let oldStatus = resource.data.status;
+        let newStatus = request.resource.data.status;
+        return newStatus == oldStatus
+          || (oldStatus == 'pending'   && newStatus == 'uploading')
+          || (oldStatus == 'uploading' && newStatus == 'completed')
+          || (oldStatus == 'pending'   && newStatus == 'completed');
+      }
+
+      allow read:   if signedIn();
+      allow create: if false;
+      allow delete: if false;
+      allow update: if signedIn()
+                       && onlyAllowedFields()
+                       && statusTransitionOk();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

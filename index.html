@@ -612,6 +612,8 @@
 <!-- SDK โหลดก่อน main script เสมอ -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
@@ -632,6 +634,7 @@ const FIREBASE_CONFIG = {
   appId:             '1:846071482521:web:00f846689dec1029d0d008',
 };
 const LIFF_ID = '2010384567-I6cKE9HG';
+const RECAPTCHA_SITE_KEY = '6LeCPyYtAAAAAPPwl0IisCVWN8l3GpJOfHL-_OEO';
 
 // ============================================================
 // TEMPLATE DEFINITIONS
@@ -770,6 +773,7 @@ let allAssets = [];
 // FIREBASE INIT
 // ============================================================
 firebase.initializeApp(FIREBASE_CONFIG);
+firebase.appCheck().activate(RECAPTCHA_SITE_KEY, true);
 const db        = firebase.firestore();
 const storage   = firebase.storage();
 const functions = firebase.functions();
@@ -830,6 +834,15 @@ async function initLiff() {
     document.getElementById('installer-name').textContent = profile.displayName;
     const av = document.getElementById('installer-avatar');
     if (profile.pictureUrl) av.innerHTML = `<img src="${profile.pictureUrl}" alt="" />`;
+
+    try {
+      await firebase.auth().signInAnonymously();
+    } catch (authErr) {
+      console.error('signInAnonymously failed', authErr);
+      showToast('เชื่อมต่อระบบไม่สำเร็จ — ลองรีเฟรช', 'error');
+      return;
+    }
+
     await loadAssets();
     showScreen('home');
   } catch (err) {
