@@ -345,30 +345,44 @@
     .is-error   .result-icon { background: var(--red-light); color: var(--red); }
     .is-error   .result-title { color: var(--red); }
 
-    /* ===== QR HERO (large, centered) ===== */
-    .btn-qr-large {
-      background: linear-gradient(135deg, var(--blue) 0%, #2563EB 100%);
-      color: var(--white);
-      padding: 36px 24px;
+    /* ===== ACTION CARDS (QR + manual pick on home) ===== */
+    .action-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
       border-radius: var(--radius);
-      display: flex; flex-direction: column; align-items: center; gap: 10px;
-      box-shadow: 0 6px 24px rgba(27,79,138,0.32);
-      width: 100%; text-align: center;
-      transition: transform 0.1s;
+      padding: 16px;
+      display: flex; align-items: center; gap: 14px;
+      width: 100%; text-align: left;
+      font-family: inherit; color: inherit;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.15s;
     }
-    .btn-qr-large:active { transform: scale(0.98); opacity: 0.9; }
-    .btn-qr-large .icon { font-size: 4rem; line-height: 1; }
-    .btn-qr-large .title { font-size: 1.3rem; font-weight: 700; }
-    .btn-qr-large .desc { font-size: 0.85rem; opacity: 0.9; }
-
-    .manual-pick-toggle {
-      text-align: center; margin-top: 18px;
-      font-size: 0.88rem; color: var(--gray-600);
-      text-decoration: underline;
-      background: transparent; border: none; cursor: pointer;
-      width: 100%; padding: 6px;
+    .action-card:active { transform: scale(0.99); }
+    .action-card.primary {
+      border: 2px solid var(--blue);
+      box-shadow: 0 4px 14px rgba(27,79,138,0.10);
     }
-    .manual-pick-toggle:active { color: var(--blue); }
+    .action-card .ac-icon {
+      width: 56px; height: 56px;
+      border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .action-card .ac-icon.blue  { background: var(--blue-light);  color: var(--blue); }
+    .action-card .ac-icon.green { background: var(--green-light); color: var(--green); }
+    .action-card .ac-icon svg { width: 30px; height: 30px; }
+    .action-card .ac-body { flex: 1; min-width: 0; }
+    .action-card .ac-title {
+      font-size: 1.05rem; font-weight: 700;
+      color: var(--gray-800); margin-bottom: 2px;
+    }
+    .action-card .ac-desc {
+      font-size: 0.82rem; color: var(--gray-600);
+    }
+    .action-card .ac-arrow {
+      flex-shrink: 0; color: var(--gray-400);
+      font-size: 1.6rem; font-weight: 600; line-height: 1;
+    }
+    .action-card.primary .ac-arrow { color: var(--blue); }
 
     /* ===== CONFIRM SCREEN ===== */
     .confirm-box-label {
@@ -455,16 +469,32 @@
   </header>
 
   <div class="content" style="padding-top:32px;">
-    <!-- QR Hero (large, primary CTA) -->
-    <button class="btn-qr-large" id="btn-scan-qr">
-      <div class="icon">📷</div>
-      <div class="title">สแกน QR ที่สติกเกอร์</div>
-      <div class="desc">เปิดกล้อง สแกน QR บนกล่องครุภัณฑ์</div>
+    <!-- QR Hero — primary action card -->
+    <button class="action-card primary" id="btn-scan-qr" type="button">
+      <div class="ac-icon blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <path d="M14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z" fill="currentColor"/>
+        </svg>
+      </div>
+      <div class="ac-body">
+        <div class="ac-title">สแกน QR ที่สติกเกอร์</div>
+        <div class="ac-desc">วิธีที่เร็วและแม่นที่สุด</div>
+      </div>
+      <div class="ac-arrow">›</div>
     </button>
 
-    <!-- Fallback 1: พิมพ์เลขกล่อง (กรณีกล้องสแกนไม่ได้) -->
+    <!-- Fallback 1: พิมพ์เลขกล่อง (เลือกประเภทเครื่องก่อน) -->
     <div class="card" style="padding:14px;">
       <div class="card-title">หรือพิมพ์เลขกล่อง</div>
+      <select class="select-field" id="box-device-select" style="margin-bottom:8px;">
+        <option value="">— เลือกประเภทเครื่อง —</option>
+        <option value="PC1">PC แบบ 1</option>
+        <option value="Notebook">Notebook</option>
+        <option value="UPS2k">UPS 2kVA</option>
+      </select>
       <div style="display:flex; gap:8px;">
         <input id="box-input" class="sn-input" type="text"
                inputmode="numeric" autocomplete="off" placeholder="เช่น 53" />
@@ -474,9 +504,19 @@
       <div id="box-match-list" style="margin-top:10px;"></div>
     </div>
 
-    <!-- Fallback 2: ลิงก์เลือกจากจังหวัด -->
-    <button class="manual-pick-toggle" id="toggle-manual-pick">
-      สแกนไม่ได้? เลือกจากจังหวัด
+    <!-- Fallback 2: เลือกจากจังหวัด — secondary action card -->
+    <button class="action-card" id="toggle-manual-pick" type="button">
+      <div class="ac-icon green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 21s-7-7.5-7-12a7 7 0 0 1 14 0c0 4.5-7 12-7 12z"/>
+          <circle cx="12" cy="9" r="2.5"/>
+        </svg>
+      </div>
+      <div class="ac-body">
+        <div class="ac-title">เลือกจากจังหวัด</div>
+        <div class="ac-desc">กรณีสแกน QR ไม่ได้</div>
+      </div>
+      <div class="ac-arrow">›</div>
     </button>
 
     <!-- Fallback: region/province/list (hidden by default) -->
@@ -1141,6 +1181,12 @@ function lookupBoxNumber() {
   const val = document.getElementById('box-input').value.trim();
   if (!val) return;
 
+  const dev = document.getElementById('box-device-select').value;
+  if (!dev) {
+    showToast('เลือกประเภทเครื่องก่อน', 'error');
+    return;
+  }
+
   const wanted = parseInt(val, 10);
   if (!Number.isInteger(wanted)) {
     showToast('กรุณาพิมพ์เลข', 'error');
@@ -1148,6 +1194,7 @@ function lookupBoxNumber() {
   }
 
   const matches = allAssets.filter(a => {
+    if (a.deviceType !== dev) return false;
     const front = parseInt(String(a.boxNumber || '').split('/')[0], 10);
     return Number.isInteger(front) && front === wanted;
   });
