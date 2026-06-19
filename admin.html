@@ -459,6 +459,15 @@ async function boot(){
 
 const TEMPLATE_LABELS = { PC1:'PC + UPS', PC2:'PC', Notebook:'Notebook', Tablet:'iPad', UPS2k:'UPS 2kVA' };
 
+// slot SN ที่เครื่องแต่ละประเภท "มีตามสเปค" (ไม่อิงว่า S/N กรอกแล้วหรือยัง) ใช้ map รุ่นในหัว PDF
+const DEVICE_SN_SLOTS = {
+  PC1:      ['pc','monitor','ups'],
+  PC2:      ['pc','monitor'],
+  Notebook: ['pc'],
+  Tablet:   ['pc'],
+  UPS2k:    ['ups'],
+};
+
 // รุ่นอุปกรณ์ — จัดซื้อล็อตเดียว spec เดียวกันทั้งหมด → hardcode ตาม deviceType + snKey
 function modelFor(deviceType, snKey){
   if(snKey==='pc'){
@@ -838,31 +847,35 @@ function imgToDataUrl(url){
 async function buildReportHtml(data){
   const tKey=data.deviceType||'PC1';
   const pages=TEMPLATE_PHOTOS_PAGES[tKey]||TEMPLATE_PHOTOS_PAGES.PC1;
-  const loc=data.location||{};const sn=data.serialNumbers||{};const inst=data.installer||{};
+  const loc=data.location||{};const sn=data.serialNumbers||{};
   const site=siteName(loc);
   const cd=data.completedAt?(data.completedAt.toDate?data.completedAt.toDate():new Date(data.completedAt)).toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'}):'-';
-  // S/N แยกช่อง: label ของช่อง pc เปลี่ยนตามประเภทเครื่อง + value เป็น 2 บรรทัด (รุ่น / S/N: x)
+  // รุ่นทุกอุปกรณ์ตามสเปคเครื่องประเภทนี้ — สำหรับ subtitle หัวกล่อง (อิงจาก DEVICE_SN_SLOTS ไม่ใช่อิง sn ที่กรอก)
+  const headerModels = (DEVICE_SN_SLOTS[tKey]||['pc'])
+    .map(k => modelFor(tKey, k))
+    .filter(Boolean)
+    .join(' | ');
+  // S/N: label ของช่อง pc เปลี่ยนตามประเภทเครื่อง, value เป็นเลข S/N เปล่า (รุ่นย้ายขึ้นหัวแล้ว)
   const pcLabel = (tKey==='Notebook') ? 'NB' : (tKey==='Tablet') ? 'Tablet' : 'PC';
   const snCells=[];
-  function snCell(label, snKey, value){
-    const model=modelFor(tKey, snKey);
-    const val = model
-      ? `<div>${model}</div><div style="color:#555;font-size:10px;margin-top:1px">S/N: ${value}</div>`
-      : `S/N: ${value}`;
-    snCells.push([label, val]);
-  }
   if(tKey==='UPS2k'){
-    if(sn.ups) snCell('UPS', 'ups', sn.ups);
+    if(sn.ups) snCells.push(['UPS', sn.ups]);
   }else{
-    if(sn.pc) snCell(pcLabel, 'pc', sn.pc);
-    if(sn.monitor) snCell('Monitor', 'monitor', sn.monitor);
-    if(sn.ups) snCell('UPS', 'ups', sn.ups);
+    if(sn.pc) snCells.push([pcLabel, sn.pc]);
+    if(sn.monitor) snCells.push(['Monitor', sn.monitor]);
+    if(sn.ups) snCells.push(['UPS', sn.ups]);
   }
+  // S/N rows: 2 pairs per row (4-col layout). ถ้าจำนวนคี่ → row สุดท้าย colspan=3
   let snRowHtml='';
-  if(snCells.length){
-    const cells=snCells.slice();
-    for(let i=cells.length;i<3;i++){cells.push(['','']);}
-    snRowHtml='<tr>'+cells.map(([k,v])=>`<td class="sn-label">${k}</td><td class="sn-val">${v}</td>`).join('')+'</tr>';
+  for(let i=0;i<snCells.length;i+=2){
+    const [l1,v1]=snCells[i];
+    const right=snCells[i+1];
+    if(right){
+      const [l2,v2]=right;
+      snRowHtml+=`<tr><td class="sn-label">${l1}</td><td class="sn-val">${v1}</td><td class="sn-label">${l2}</td><td class="sn-val">${v2}</td></tr>`;
+    }else{
+      snRowHtml+=`<tr><td class="sn-label">${l1}</td><td colspan="3" class="sn-val">${v1}</td></tr>`;
+    }
   }
 
   // แปลงรูปทั้งหมดเป็น base64 ก่อน
@@ -882,10 +895,10 @@ async function buildReportHtml(data){
     }).join('');
     pagesHtml+=`<div class="page">
       <div class="page-header"><div><div class="title">รายงานการติดตั้งครุภัณฑ์</div><div class="subtitle">สำนักงานปลัดกระทรวงพลังงาน (สป.พน.) ปีงบประมาณ 2569</div></div>
-      <div style="text-align:right"><div class="asset-id-big">กล่อง ${data.boxNumber||'-'}</div><div class="subtitle">${TEMPLATE_FULL[tKey]||tKey}</div></div></div>
+      <div style="text-align:right;max-width:90mm"><div class="asset-id-big">กล่อง ${data.boxNumber||'-'}</div><div class="subtitle" style="line-height:1.35">${headerModels||tKey}</div></div></div>
       <table class="info-table">
-        <tr><td class="label">หน่วยงาน / จังหวัด</td><td>${site}</td><td class="label">ช่างติดตั้ง</td><td>${inst.name||'-'}</td><td class="label">วันที่ติดตั้ง</td><td>${cd}</td></tr>
-        <tr><td class="label">ที่อยู่</td><td colspan="5">${loc.address||'-'}</td></tr>
+        <tr><td class="label">หน่วยงาน / จังหวัด</td><td>${site}</td><td class="label">วันที่ติดตั้ง</td><td>${cd}</td></tr>
+        <tr><td class="label">ที่อยู่</td><td colspan="3">${loc.address||'-'}</td></tr>
         ${snRowHtml}
       </table>
       <div class="photo-grid cols-${slots.length<=2?slots.length:2}" style="grid-template-rows:repeat(${Math.ceil(slots.length/(slots.length<=2?slots.length:2))},83mm)">${grid}</div>
@@ -905,10 +918,9 @@ body{font-family:'Sarabun',sans-serif;font-size:12px;background:#fff}
 .info-table td{padding:4px 6px;border:1px solid #ddd;vertical-align:top;word-break:break-word;overflow-wrap:break-word}
 .info-table td.label{background:#EBF2FB;font-weight:700;width:100px;color:#1B4F8A;white-space:nowrap}
 .info-table td.sn-label{background:#EBF2FB;font-weight:700;width:70px;color:#1B4F8A;font-size:10px}
-.info-table td.sn-val{width:calc((100% - 210px)/3)}
 .sn-inner{border-collapse:collapse}.sn-inner td{border:none;padding:1px 8px 1px 0}.sn-inner td.label{background:none;font-weight:700;width:auto}
 .page-num{font-size:10px;color:#999;text-align:center}
-.photo-grid{flex:1;display:grid;gap:15px;min-height:0;align-content:start}.cols-1{grid-template-columns:1fr}.cols-2{grid-template-columns:1fr 1fr}
+.photo-grid{flex:1;display:grid;gap:15px;min-height:0;align-content:start;margin-top:20mm}.cols-1{grid-template-columns:1fr}.cols-2{grid-template-columns:1fr 1fr}
 .photo-slot{border:1px solid #ddd;border-radius:6px;overflow:hidden;display:flex;flex-direction:column;min-height:0;height:83mm}
 .photo-slot img{width:100%;flex:1;object-fit:cover;display:block;min-height:0}
 .no-photo{flex:1;background:#f5f5f5;display:flex;align-items:center;justify-content:center;color:#bbb;min-height:0}
