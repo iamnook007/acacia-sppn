@@ -458,6 +458,21 @@ async function boot(){
 }
 
 const TEMPLATE_LABELS = { PC1:'PC + UPS', PC2:'PC', Notebook:'Notebook', Tablet:'iPad', UPS2k:'UPS 2kVA' };
+
+// รุ่นอุปกรณ์ — จัดซื้อล็อตเดียว spec เดียวกันทั้งหมด → hardcode ตาม deviceType + snKey
+function modelFor(deviceType, snKey){
+  if(snKey==='pc'){
+    if(deviceType==='PC1'||deviceType==='PC2') return 'ASUS ExpertCenter 501';
+    if(deviceType==='Notebook') return 'ASUS ExpertBook B1 (B1403)';
+    if(deviceType==='Tablet')   return 'Apple iPad Air';
+  }
+  if(snKey==='monitor') return 'ASUS VA249HG-R';
+  if(snKey==='ups'){
+    if(deviceType==='UPS2k') return 'SKD G-2000';
+    return 'SKD G-800';
+  }
+  return '';
+}
 const PHOTO_LABELS = {
   install:'เครื่องเปิด', msOffice:'MS Office', snPc:'S/N เครื่อง', stickerPc:'Sticker เครื่อง',
   snMonitor:'S/N จอ', stickerMonitor:'Sticker จอ', snUps:'S/N UPS', stickerUps:'Sticker UPS',
@@ -757,8 +772,15 @@ function openModal(docId){
       const pcL=(a.deviceType==='Notebook')?'NB':(a.deviceType==='Tablet')?'Tablet':'PC';
       let pairs;
       if(a.deviceType==='UPS2k') pairs=[['UPS','ups']];
-      else pairs=[[pcL,'pc'],['MONITOR','monitor'],['UPS','ups']];
-      return pairs.filter(([,k])=>sn[k]).map(([lbl,k])=>lbl+': '+sn[k]).join('   |   ')||'-';
+      else pairs=[[pcL,'pc'],['Monitor','monitor'],['UPS','ups']];
+      const rows=pairs.filter(([,k])=>sn[k]).map(([lbl,k])=>{
+        const model=modelFor(a.deviceType,k);
+        return `<div style="display:flex;gap:8px;line-height:1.55">
+          <span style="display:inline-block;min-width:64px;color:var(--gray-600);font-weight:600">${lbl}</span>
+          <span>${model?model+' ':''}<span style="color:var(--gray-600)">(S/N: ${sn[k]})</span></span>
+        </div>`;
+      }).join('');
+      return rows ? `<div style="margin-top:4px">${rows}</div>` : '-';
     })()}</div>
     <div style="grid-column:1/3"><span class="label">ที่อยู่:</span> ${a.location?.address||'-'}</div>
   `;
@@ -819,15 +841,22 @@ async function buildReportHtml(data){
   const loc=data.location||{};const sn=data.serialNumbers||{};const inst=data.installer||{};
   const site=siteName(loc);
   const cd=data.completedAt?(data.completedAt.toDate?data.completedAt.toDate():new Date(data.completedAt)).toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'}):'-';
-  // S/N แยกช่อง: label ของช่อง pc เปลี่ยนตามประเภทเครื่อง
-  const pcLabel = (tKey==='Notebook') ? 'NB S/N' : (tKey==='Tablet') ? 'Tablet S/N' : 'PC S/N';
+  // S/N แยกช่อง: label ของช่อง pc เปลี่ยนตามประเภทเครื่อง + value เป็น 2 บรรทัด (รุ่น / S/N: x)
+  const pcLabel = (tKey==='Notebook') ? 'NB' : (tKey==='Tablet') ? 'Tablet' : 'PC';
   const snCells=[];
+  function snCell(label, snKey, value){
+    const model=modelFor(tKey, snKey);
+    const val = model
+      ? `<div>${model}</div><div style="color:#555;font-size:10px;margin-top:1px">S/N: ${value}</div>`
+      : `S/N: ${value}`;
+    snCells.push([label, val]);
+  }
   if(tKey==='UPS2k'){
-    if(sn.ups) snCells.push(['UPS S/N', sn.ups]);
+    if(sn.ups) snCell('UPS', 'ups', sn.ups);
   }else{
-    if(sn.pc) snCells.push([pcLabel, sn.pc]);
-    if(sn.monitor) snCells.push(['Monitor S/N', sn.monitor]);
-    if(sn.ups) snCells.push(['UPS S/N', sn.ups]);
+    if(sn.pc) snCell(pcLabel, 'pc', sn.pc);
+    if(sn.monitor) snCell('Monitor', 'monitor', sn.monitor);
+    if(sn.ups) snCell('UPS', 'ups', sn.ups);
   }
   let snRowHtml='';
   if(snCells.length){
