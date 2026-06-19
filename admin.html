@@ -485,13 +485,14 @@ function modelFor(deviceType, snKey){
 const PHOTO_LABELS = {
   install:'เครื่องเปิด', msOffice:'MS Office', snPc:'S/N เครื่อง', stickerPc:'Sticker เครื่อง',
   snMonitor:'S/N จอ', stickerMonitor:'Sticker จอ', snUps:'S/N UPS', stickerUps:'Sticker UPS',
+  plug:'ปลั๊ก ELECTON',
 };
 const TEMPLATE_PHOTOS = {
   PC1:['install','msOffice','snPc','stickerPc','snMonitor','stickerMonitor','snUps','stickerUps'],
   PC2:['install','msOffice','snPc','stickerPc','snMonitor','stickerMonitor'],
   Notebook:['install','msOffice','snPc','stickerPc'],
   Tablet:['install','msOffice','snPc','stickerPc'],
-  UPS2k:['snUps','stickerUps'],
+  UPS2k:['snUps','stickerUps','plug'],
 };
 
 let allAssets = [];
@@ -822,7 +823,7 @@ const TEMPLATE_PHOTOS_PAGES = {
   PC2:[['install','msOffice','snPc','stickerPc'],['snMonitor','stickerMonitor']],
   Notebook:[['install','msOffice','snPc','stickerPc']],
   Tablet:[['install','msOffice','snPc','stickerPc']],
-  UPS2k:[['snUps','stickerUps']],
+  UPS2k:[['snUps','stickerUps','plug']],
 };
 const TEMPLATE_FULL={PC1:'PC แบบที่ 1 + UPS 800VA',PC2:'PC แบบที่ 2',Notebook:'Notebook',Tablet:'Tablet (iPad)',UPS2k:'UPS 2kVA'};
 
