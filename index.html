@@ -1002,10 +1002,13 @@ function openInstallScreen(asset) {
   document.getElementById('install-template-badge').textContent = tKey;
   document.getElementById('install-template-badge').className = `asset-badge ${getBadgeClass(asset.deviceType)}`;
 
-  // Pre-fill S/N from QR scan if available
-  if (asset._qrSN) {
-    const field = tmpl.snFields[0];
-    if (field) serialNumbers[field.key] = asset._qrSN;
+  // Pre-fill S/N ครบทุก field จาก Firestore (ใส่ค่าใน state — renderInstallContent จะเซ็ตลง DOM + auto-filled class เอง)
+  if (asset._prefillSN) {
+    tmpl.snFields.forEach(f => {
+      if (asset._prefillSN[f.key]) {
+        serialNumbers[f.key] = asset._prefillSN[f.key];
+      }
+    });
   }
 
   renderInstallContent(tKey, tmpl);
@@ -1044,7 +1047,7 @@ function renderInstallContent(tKey, tmpl) {
   tmpl.snFields.forEach(f => {
     const preVal = serialNumbers[f.key] || '';
     const cls    = preVal ? 'sn-input auto-filled' : 'sn-input';
-    const scannable = (f.key === 'monitor' || f.key === 'ups');
+    const scannable = false;   // S/N ถูก prefill จาก Firestore ตอน startScan แล้ว ไม่ต้องสแกนแยก
     const scanBtn = scannable
       ? `<button type="button" class="sn-scan-btn" onclick="scanSnForField('${f.key}')" title="สแกน QR สติกเกอร์${f.label}">📷</button>`
       : '';
@@ -1139,20 +1142,35 @@ async function startScan() {
     const result = await liff.scanCodeV2();
     if (!result?.value) return;
 
-    const parts   = result.value.split('|');
-    const assetId = parts[0]?.trim();
-    const sn      = parts[1]?.trim() || '';
+    // รองรับทั้ง QR แบบใหม่ ("SN" ล้วน) และแบบเก่า ("AssetID|SN") — ใช้ส่วนหลังเป็น S/N เสมอ
+    const parts     = result.value.trim().split('|');
+    const scannedSN = (parts.length > 1 ? parts[1] : parts[0]).trim();
+    if (!scannedSN) {
+      showToast('QR ไม่มี S/N', 'error');
+      return;
+    }
 
-    const asset = allAssets.find(a => a.assetId === assetId);
-    if (!asset) {
-      showToast(`ไม่พบ Asset: ${assetId}`, 'error');
+    // หา doc ด้วย sn.pc — ใช้ single-field auto-index (ไม่ต้องสร้าง composite)
+    const snap = await db.collection('installations')
+      .where('serialNumbers.pc', '==', scannedSN)
+      .limit(1)
+      .get();
+    if (snap.empty) {
+      showToast('ไม่พบเครื่องนี้ในระบบ', 'error');
       return;
     }
-    if (asset.status === 'completed') {
-      showToast(`${assetId} ติดตั้งเสร็จแล้ว`, 'error');
+
+    const doc  = snap.docs[0];
+    const data = doc.data();
+    if (data.status === 'completed') {
+      showToast(`${data.assetId} ติดตั้งเสร็จแล้ว`, 'error');
       return;
     }
-    asset._qrSN = sn;
+
+    // build asset object จาก doc ปัจจุบัน + แนบ S/N ทั้งหมดที่ prefill ได้
+    const asset = { docId: doc.id, ...data };
+    asset._prefillSN = data.serialNumbers || {};
+
     pendingAsset = asset;
     showConfirmScreen(asset);
   } catch (err) {
