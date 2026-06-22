@@ -1235,6 +1235,7 @@ function lookupBoxNumber() {
 
   if (available.length === 1) {
     pendingAsset = available[0];
+    available[0]._prefillSN = available[0].serialNumbers || {};
     showConfirmScreen(available[0]);
     document.getElementById('box-input').value = '';
     listEl.innerHTML = '';
@@ -1264,6 +1265,7 @@ function pickBoxMatch(docId) {
   const asset = allAssets.find(a => a.docId === docId);
   if (!asset) return;
   pendingAsset = asset;
+  asset._prefillSN = asset.serialNumbers || {};
   showConfirmScreen(asset);
   document.getElementById('box-input').value = '';
   document.getElementById('box-match-list').innerHTML = '';
