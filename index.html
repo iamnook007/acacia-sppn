@@ -978,6 +978,7 @@ function renderAssetList() {
 function selectAsset(docId) {
   const asset = allAssets.find(a => a.docId === docId);
   if (!asset) return;
+  asset._prefillSN = asset.serialNumbers || {};
   openInstallScreen(asset);
 }
 
