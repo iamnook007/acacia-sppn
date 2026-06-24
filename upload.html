@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Desktop Uploader — สป.พน.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --blue:#1B4F8A; --blue-dark:#143D6B; --blue-light:#EBF2FB;
+    --green:#1A7A4A; --green-light:#E8F5EE;
+    --amber:#D97706; --amber-light:#FEF3C7;
+    --red:#DC2626; --red-light:#FEE2E2;
+    --gray-50:#F8FAFC; --gray-100:#F1F5F9; --gray-200:#E2E8F0;
+    --gray-400:#94A3B8; --gray-600:#475569; --gray-800:#1E293B;
+    --white:#fff; --radius:12px; --radius-sm:8px; --shadow:0 2px 12px rgba(0,0,0,0.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Sarabun',sans-serif;background:var(--gray-100);color:var(--gray-800);font-size:14px;min-height:100vh}
+  .screen{display:none}
+  .screen.active{display:block}
+
+  /* ===== LOGIN ===== */
+  #screen-login{min-height:100vh;display:none;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--blue) 0%,var(--blue-dark) 100%)}
+  #screen-login.active{display:flex}
+  .login-card{background:#fff;border-radius:16px;padding:36px 36px 32px;box-shadow:0 12px 48px rgba(0,0,0,0.18);width:100%;max-width:360px}
+  .login-card h1{font-size:1.4rem;font-weight:700;color:var(--blue);margin-bottom:4px}
+  .login-sub{font-size:0.86rem;color:var(--gray-600);margin-bottom:24px}
+  .login-card input{width:100%;padding:12px 14px;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);font-family:inherit;font-size:0.95rem;margin-bottom:12px;background:var(--gray-50)}
+  .login-card input:focus{outline:none;border-color:var(--blue);background:#fff}
+  .login-card button{width:100%;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius-sm);font-family:inherit;font-weight:600;font-size:0.95rem;cursor:pointer}
+  .login-card button:hover{background:var(--blue-dark)}
+  .login-card .error{color:var(--red);font-size:0.85rem;margin-top:10px;min-height:1.2em}
+
+  /* ===== TOPBAR ===== */
+  .topbar{background:var(--blue);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+  .topbar h1{font-size:1.05rem;font-weight:700}
+  .topbar .sub{font-size:0.78rem;opacity:0.85;margin-top:2px}
+  .btn-logout{background:rgba(255,255,255,0.15);color:#fff;border:none;padding:7px 14px;border-radius:6px;font-family:inherit;font-size:0.82rem;font-weight:600;cursor:pointer}
+  .btn-logout:hover{background:rgba(255,255,255,0.25)}
+
+  .container{max-width:1280px;margin:0 auto;padding:24px}
+  .page{display:none}
+  .page.active{display:block}
+
+  /* ===== SEARCH ===== */
+  .search-bar{background:#fff;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .search-bar input{flex:1;min-width:240px;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);font-family:inherit;font-size:0.95rem}
+  .search-bar input:focus{outline:none;border-color:var(--blue)}
+  .search-stats{font-size:0.82rem;color:var(--gray-600);font-weight:600}
+
+  .asset-list{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  .asset-row{display:grid;grid-template-columns:130px 100px 130px 1fr 130px;gap:12px;padding:12px 18px;border-bottom:1px solid var(--gray-100);cursor:pointer;align-items:center;transition:background 0.1s}
+  .asset-row:hover{background:var(--blue-light)}
+  .asset-row:last-child{border-bottom:none}
+  .asset-row .asset-id{font-weight:700;color:var(--blue);font-size:0.92rem}
+  .asset-row .asset-box{font-weight:600;color:var(--gray-800)}
+  .asset-row .asset-type{font-size:0.85rem;color:var(--gray-600);font-weight:500}
+  .asset-row .asset-loc{font-size:0.88rem;color:var(--gray-800);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .status-badge{padding:4px 10px;border-radius:999px;font-size:0.76rem;font-weight:700;text-align:center;justify-self:end}
+  .status-completed{background:var(--green-light);color:var(--green)}
+  .status-uploading{background:var(--amber-light);color:var(--amber)}
+  .status-pending{background:var(--gray-100);color:var(--gray-600)}
+  .empty{padding:48px 24px;text-align:center;color:var(--gray-400);font-size:0.92rem}
+
+  /* ===== UPLOAD SCREEN ===== */
+  .btn-back{background:#fff;color:var(--blue);border:1.5px solid var(--blue);padding:8px 16px;border-radius:var(--radius-sm);font-family:inherit;font-weight:600;font-size:0.88rem;cursor:pointer;margin-bottom:16px}
+  .btn-back:hover{background:var(--blue-light)}
+
+  .upload-header{background:#fff;border-radius:var(--radius);padding:18px 22px;box-shadow:var(--shadow);margin-bottom:16px;border-left:5px solid var(--blue)}
+  .upload-header .header-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+  .upload-header .hdr-assetId{font-size:1.3rem;font-weight:700;color:var(--blue)}
+  .upload-header .hdr-status{padding:5px 12px;border-radius:999px;font-size:0.8rem;font-weight:700}
+  .upload-header .header-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;font-size:0.92rem;color:var(--gray-800)}
+  .upload-header .header-info strong{color:var(--gray-600);font-weight:600;margin-right:6px}
+
+  .photo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+  @media (max-width:1024px){.photo-grid{grid-template-columns:repeat(3,1fr)}}
+  @media (max-width:760px){.photo-grid{grid-template-columns:repeat(2,1fr)}}
+
+  .photo-slot{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
+  .slot-label{background:var(--blue);color:#fff;padding:8px 12px;font-weight:600;font-size:0.85rem;text-align:center}
+  .slot-dropzone{position:relative;flex:1;min-height:180px;background:var(--gray-50);border:2px dashed var(--gray-200);cursor:pointer;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:all 0.15s}
+  .slot-dropzone:hover{border-color:var(--blue);background:var(--blue-light)}
+  .slot-dropzone.drag-over{border-color:var(--blue);background:var(--blue-light);transform:scale(0.98)}
+  .slot-img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+  .slot-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px;text-align:center;background:rgba(255,255,255,0.92);color:var(--gray-600);transition:opacity 0.15s}
+  .slot-overlay.hidden{display:none}
+  .slot-overlay.overlay-new{background:rgba(232,245,238,0.92);color:var(--green)}
+  .slot-icon{font-size:2rem;line-height:1;margin-bottom:6px}
+  .slot-text{font-size:0.82rem;font-weight:500}
+  .slot-img-only .slot-overlay{opacity:0}
+  .slot-img-only:hover .slot-overlay{opacity:1}
+  .slot-badge{padding:6px 10px;font-size:0.78rem;font-weight:700;text-align:center;background:var(--gray-100);color:var(--gray-600)}
+  .slot-badge.badge-existing{background:var(--blue-light);color:var(--blue)}
+  .slot-badge.badge-new{background:var(--green-light);color:var(--green)}
+  .slot-badge.badge-empty{background:var(--gray-100);color:var(--gray-400)}
+
+  /* ===== UPLOAD ACTIONS ===== */
+  .upload-actions{background:#fff;border-radius:var(--radius);padding:18px 22px;box-shadow:var(--shadow);position:sticky;bottom:16px}
+  .actions-row{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+  .actions-row .file-summary{font-size:0.92rem;color:var(--gray-600);font-weight:600}
+  .actions-row .file-summary strong{color:var(--blue);font-size:1.1rem;font-weight:700}
+  .btn-submit{background:var(--blue);color:#fff;border:none;padding:12px 28px;border-radius:var(--radius-sm);font-family:inherit;font-weight:700;font-size:0.95rem;cursor:pointer}
+  .btn-submit:disabled{background:var(--gray-200);color:var(--gray-400);cursor:not-allowed}
+  .btn-submit:hover:not(:disabled){background:var(--blue-dark)}
+
+  .upload-progress{margin-top:14px;padding-top:14px;border-top:1px solid var(--gray-100)}
+  .progress-bar{height:8px;background:var(--gray-100);border-radius:999px;overflow:hidden;margin-bottom:8px}
+  .progress-fill{height:100%;background:var(--blue);border-radius:999px;width:0%;transition:width 0.3s ease}
+  .progress-text{font-size:0.85rem;color:var(--gray-600);text-align:center;font-weight:500}
+
+  .upload-result{margin-top:14px;padding:12px 16px;border-radius:var(--radius-sm);font-weight:600;text-align:center}
+  .result-ok{background:var(--green-light);color:var(--green)}
+  .result-err{background:var(--red-light);color:var(--red);font-size:0.88rem}
+  .result-empty{display:none}
+
+  /* ===== TOAST ===== */
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--gray-800);color:#fff;padding:12px 24px;border-radius:8px;z-index:300;opacity:0;transition:opacity 0.2s;font-weight:500;pointer-events:none}
+  .toast.show{opacity:1}
+  .toast.error{background:var(--red)}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="screen-login" class="screen active">
+  <div class="login-card">
+    <h1>Desktop Uploader</h1>
+    <div class="login-sub">โครงการติดตั้งครุภัณฑ์ สป.พน. 2569</div>
+    <input id="pwd" type="password" placeholder="รหัสผ่าน" autocomplete="off" />
+    <button id="btn-login" type="button">เข้าสู่ระบบ</button>
+    <div id="login-error" class="error"></div>
+  </div>
+</div>
+
+<!-- ===== APP SCREEN ===== -->
+<div id="screen-app" class="screen">
+  <div class="topbar">
+    <div>
+      <h1>Desktop Uploader</h1>
+      <div class="sub">อัปโหลดรูปแทนช่าง · โครงการ สป.พน. 2569</div>
+    </div>
+    <button class="btn-logout" id="btn-logout" type="button">ออกจากระบบ</button>
+  </div>
+
+  <div class="container">
+    <!-- Search/Select -->
+    <div id="page-search" class="page active">
+      <div class="search-bar">
+        <input id="search-input" type="text" placeholder="ค้นหา assetId / เลขกล่อง / หน่วยงาน / จังหวัด..." autocomplete="off" />
+        <div class="search-stats" id="search-stats">กำลังโหลด...</div>
+      </div>
+      <div id="asset-list" class="asset-list">
+        <div class="empty">กำลังโหลดรายการ...</div>
+      </div>
+    </div>
+
+    <!-- Upload -->
+    <div id="page-upload" class="page">
+      <button class="btn-back" id="btn-back" type="button">← กลับ</button>
+      <div class="upload-header" id="upload-header"></div>
+      <div class="photo-grid" id="photo-grid"></div>
+      <div class="upload-actions">
+        <div class="actions-row">
+          <div class="file-summary" id="file-summary">รูปที่จะอัป: <strong>0</strong></div>
+          <button class="btn-submit" id="btn-submit" type="button" disabled>บันทึก</button>
+        </div>
+        <div class="upload-progress" id="upload-progress" style="display:none">
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+          <div class="progress-text" id="progress-text">—</div>
+        </div>
+        <div id="upload-result" class="result-empty"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+
+<script>
+// ============================================================
+// AUTH (in-page password)
+// ============================================================
+const APP_PASSWORD = 'acacia2569';
+
+document.getElementById('btn-login').addEventListener('click', tryLogin);
+document.getElementById('pwd').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); tryLogin(); }
+});
+
+function tryLogin() {
+  const v = document.getElementById('pwd').value;
+  if (v === APP_PASSWORD) {
+    document.getElementById('screen-login').classList.remove('active');
+    document.getElementById('screen-app').classList.add('active');
+    document.getElementById('pwd').value = '';
+    document.getElementById('login-error').textContent = '';
+    boot();
+  } else {
+    document.getElementById('login-error').textContent = 'รหัสผ่านไม่ถูกต้อง';
+    document.getElementById('pwd').select();
+  }
+}
+
+document.getElementById('btn-logout').addEventListener('click', () => {
+  if (!confirm('ออกจากระบบ?')) return;
+  location.reload();
+});
+
+// ============================================================
+// FIREBASE INIT (pattern จาก admin.html)
+// ============================================================
+const FIREBASE_CONFIG = {
+  apiKey:            'AIzaSyA-F0uH5WcyNpxpUNe7oXDG0_z4vqczW50',
+  authDomain:        'acacia-sppn.firebaseapp.com',
+  projectId:         'acacia-sppn',
+  storageBucket:     'acacia-sppn.firebasestorage.app',
+  messagingSenderId: '846071482521',
+  appId:             '1:846071482521:web:00f846689dec1029d0d008',
+};
+const RECAPTCHA_SITE_KEY = '6LeCPyYtAAAAAPPwl0IisCVWN8l3GpJOfHL-_OEO';
+firebase.initializeApp(FIREBASE_CONFIG);
+firebase.appCheck().activate(RECAPTCHA_SITE_KEY, true);
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+// ============================================================
+// TEMPLATES + LABELS
+// ============================================================
+const TEMPLATES = {
+  PC1:      ['install','msOffice','snPc','stickerPc','snMonitor','stickerMonitor','snUps','stickerUps'],
+  PC2:      ['install','msOffice','snPc','stickerPc','snMonitor','stickerMonitor'],
+  Notebook: ['install','msOffice','snPc','stickerPc'],
+  Tablet:   ['install','msOffice','snPc','stickerPc'],
+  UPS2k:    ['snUps','stickerUps','plug'],
+};
+const PHOTO_LABELS = {
+  install:'เปิดเครื่อง', msOffice:'MS Office',
+  snPc:'S/N เครื่อง', stickerPc:'Sticker เครื่อง',
+  snMonitor:'S/N จอ', stickerMonitor:'Sticker จอ',
+  snUps:'S/N UPS', stickerUps:'Sticker UPS',
+  plug:'ปลั๊ก ELECTON',
+};
+const TEMPLATE_LABEL = {
+  PC1:'PC + UPS', PC2:'PC', Notebook:'Notebook', Tablet:'iPad', UPS2k:'UPS 2kVA',
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let allAssets = [];
+let currentAsset = null;
+let newFiles = {};   // { slotKey: File }
+let previewUrls = []; // ObjectURLs to revoke on cleanup
+
+// ============================================================
+// BOOT
+// ============================================================
+async function boot() {
+  document.getElementById('search-stats').textContent = 'กำลังเชื่อมต่อ...';
+  try {
+    await firebase.auth().signInAnonymously();
+  } catch (err) {
+    console.error('signInAnonymously failed', err);
+    toast('เชื่อมต่อระบบไม่สำเร็จ — รีเฟรช', 'error');
+    return;
+  }
+  await loadAssets();
+}
+
+async function loadAssets() {
+  try {
+    const snap = await db.collection('installations').orderBy('assetId').get();
+    allAssets = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+    document.getElementById('search-stats').textContent = `${allAssets.length} รายการ`;
+    renderAssetList();
+  } catch (err) {
+    console.error(err);
+    document.getElementById('asset-list').innerHTML = '<div class="empty">โหลดข้อมูลไม่สำเร็จ</div>';
+    document.getElementById('search-stats').textContent = '—';
+  }
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function siteName(loc) {
+  if (!loc) return '';
+  return loc.region === 'central' ? (loc.office || 'ส่วนกลาง') : (loc.province || '');
+}
+
+function statusText(s) {
+  if (s === 'completed') return '✓ ติดตั้งแล้ว';
+  if (s === 'uploading') return '⏳ กำลังทำ';
+  return 'รอติดตั้ง';
+}
+
+function statusClass(s) {
+  if (s === 'completed') return 'status-completed';
+  if (s === 'uploading') return 'status-uploading';
+  return 'status-pending';
+}
+
+// ============================================================
+// SEARCH / LIST
+// ============================================================
+document.getElementById('search-input').addEventListener('input', renderAssetList);
+
+function renderAssetList() {
+  const q = document.getElementById('search-input').value.trim().toLowerCase();
+  const filtered = !q ? allAssets : allAssets.filter(a => {
+    const fields = [
+      a.assetId, a.boxNumber, a.location?.office, a.location?.province,
+    ].filter(Boolean).map(s => String(s).toLowerCase());
+    return fields.some(f => f.includes(q));
+  });
+
+  const stats = document.getElementById('search-stats');
+  stats.textContent = q ? `${filtered.length} จาก ${allAssets.length} รายการ` : `${allAssets.length} รายการ`;
+
+  const list = document.getElementById('asset-list');
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty">ไม่พบรายการ</div>';
+    return;
+  }
+  list.innerHTML = filtered.slice(0, 200).map(a => `
+    <div class="asset-row" onclick="selectAsset('${a.docId}')">
+      <div class="asset-id">${a.assetId || '-'}</div>
+      <div class="asset-box">กล่อง ${a.boxNumber || '-'}</div>
+      <div class="asset-type">${TEMPLATE_LABEL[a.deviceType] || a.deviceType || '-'}</div>
+      <div class="asset-loc">${siteName(a.location)}</div>
+      <div class="status-badge ${statusClass(a.status)}">${statusText(a.status)}</div>
+    </div>
+  `).join('') + (filtered.length > 200 ? `<div class="empty">แสดง 200 รายการแรก — พิมพ์ค้นหาเพื่อกรอง</div>` : '');
+}
+
+// ============================================================
+// SELECT ASSET → UPLOAD SCREEN
+// ============================================================
+function selectAsset(docId) {
+  const asset = allAssets.find(a => a.docId === docId);
+  if (!asset) return;
+  currentAsset = asset;
+  cleanupPreviews();
+  newFiles = {};
+
+  document.getElementById('page-search').classList.remove('active');
+  document.getElementById('page-upload').classList.add('active');
+  document.getElementById('upload-result').className = 'result-empty';
+  document.getElementById('upload-result').innerHTML = '';
+  document.getElementById('upload-progress').style.display = 'none';
+  document.getElementById('progress-fill').style.width = '0%';
+  window.scrollTo(0, 0);
+
+  renderUploadHeader(asset);
+  renderPhotoGrid(asset);
+  updateFileSummary();
+}
+
+document.getElementById('btn-back').addEventListener('click', () => {
+  if (Object.keys(newFiles).length > 0 && !confirm('มีรูปที่ยังไม่ได้บันทึก — ออกแน่นอน?')) return;
+  cleanupPreviews();
+  newFiles = {};
+  currentAsset = null;
+  document.getElementById('page-upload').classList.remove('active');
+  document.getElementById('page-search').classList.add('active');
+});
+
+function cleanupPreviews() {
+  previewUrls.forEach(u => URL.revokeObjectURL(u));
+  previewUrls = [];
+}
+
+function renderUploadHeader(asset) {
+  const header = document.getElementById('upload-header');
+  header.innerHTML = `
+    <div class="header-top">
+      <div class="hdr-assetId">${asset.assetId} · กล่อง ${asset.boxNumber || '-'}</div>
+      <div class="hdr-status ${statusClass(asset.status)}">${statusText(asset.status)}</div>
+    </div>
+    <div class="header-info">
+      <div><strong>ประเภท:</strong> ${TEMPLATE_LABEL[asset.deviceType] || asset.deviceType}</div>
+      <div><strong>หน่วยงาน/จังหวัด:</strong> ${siteName(asset.location)}</div>
+      ${asset.location?.address ? `<div style="grid-column:1/-1"><strong>ที่อยู่:</strong> ${asset.location.address}</div>` : ''}
+    </div>
+  `;
+}
+
+// ============================================================
+// RENDER PHOTO GRID + DRAG&DROP
+// ============================================================
+function renderPhotoGrid(asset) {
+  const slots = TEMPLATES[asset.deviceType] || [];
+  const grid = document.getElementById('photo-grid');
+  grid.innerHTML = slots.map(slotKey => {
+    const existing = asset.photos?.[slotKey] || '';
+    const label = PHOTO_LABELS[slotKey] || slotKey;
+    return `
+      <div class="photo-slot">
+        <div class="slot-label">${label}</div>
+        <div class="slot-dropzone ${existing ? 'slot-img-only' : ''}" id="dz-${slotKey}" data-slot="${slotKey}">
+          ${existing ? `<img class="slot-img" src="${existing}" alt="${label}" />` : ''}
+          <div class="slot-overlay">
+            <div class="slot-icon">${existing ? '📷' : '⬆️'}</div>
+            <div class="slot-text">${existing ? 'แทนที่' : 'คลิกหรือลากรูปลงตรงนี้'}</div>
+          </div>
+        </div>
+        <div class="slot-badge ${existing ? 'badge-existing' : 'badge-empty'}" id="badge-${slotKey}">${existing ? 'รูปเดิม' : 'ยังไม่มี'}</div>
+        <input type="file" id="file-${slotKey}" accept="image/*" style="display:none" />
+      </div>
+    `;
+  }).join('');
+
+  // wire up events per slot
+  slots.forEach(slotKey => {
+    const dz = document.getElementById('dz-' + slotKey);
+    const fileInput = document.getElementById('file-' + slotKey);
+
+    dz.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', e => {
+      const f = e.target.files[0];
+      if (f) acceptFile(slotKey, f);
+      e.target.value = '';
+    });
+    dz.addEventListener('dragover', e => {
+      e.preventDefault();
+      dz.classList.add('drag-over');
+    });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+    dz.addEventListener('drop', e => {
+      e.preventDefault();
+      dz.classList.remove('drag-over');
+      const f = e.dataTransfer.files[0];
+      if (f) acceptFile(slotKey, f);
+    });
+  });
+}
+
+function acceptFile(slotKey, file) {
+  if (!file.type.startsWith('image/')) {
+    toast('ไฟล์ไม่ใช่รูป', 'error');
+    return;
+  }
+  newFiles[slotKey] = file;
+
+  const url = URL.createObjectURL(file);
+  previewUrls.push(url);
+  const dz = document.getElementById('dz-' + slotKey);
+  dz.classList.add('slot-img-only');
+  dz.innerHTML = `
+    <img class="slot-img" src="${url}" alt="${file.name}" />
+    <div class="slot-overlay overlay-new">
+      <div class="slot-icon">✨</div>
+      <div class="slot-text">รูปใหม่<br/><span style="font-size:0.72rem;opacity:0.8">${file.name}</span></div>
+    </div>
+  `;
+  const badge = document.getElementById('badge-' + slotKey);
+  badge.textContent = 'รูปใหม่';
+  badge.className = 'slot-badge badge-new';
+  updateFileSummary();
+}
+
+function updateFileSummary() {
+  const n = Object.keys(newFiles).length;
+  document.getElementById('file-summary').innerHTML = `รูปที่จะอัป: <strong>${n}</strong>`;
+  document.getElementById('btn-submit').disabled = n === 0;
+}
+
+// ============================================================
+// COMPRESS IMAGE (maxW=1280, quality=0.85)
+// ============================================================
+function compressImage(file, maxW = 1280, quality = 0.85) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxW / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(img.width  * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(blob => {
+          if (!blob) return reject(new Error('compress fail'));
+          resolve(blob);
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = () => reject(new Error('image load fail'));
+      img.src = ev.target.result;
+    };
+    reader.onerror = () => reject(new Error('file read fail'));
+    reader.readAsDataURL(file);
+  });
+}
+
+// ============================================================
+// SUBMIT UPLOAD
+// ============================================================
+document.getElementById('btn-submit').addEventListener('click', submitUpload);
+
+async function submitUpload() {
+  if (!currentAsset) return;
+  const slotKeys = Object.keys(newFiles);
+  if (slotKeys.length === 0) {
+    toast('ยังไม่ได้เลือกรูป', 'error');
+    return;
+  }
+
+  const submitBtn = document.getElementById('btn-submit');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'กำลังอัป...';
+
+  const progressEl = document.getElementById('upload-progress');
+  const progressFill = document.getElementById('progress-fill');
+  const progressText = document.getElementById('progress-text');
+  progressEl.style.display = 'block';
+  progressFill.style.width = '0%';
+
+  const resultEl = document.getElementById('upload-result');
+  resultEl.className = 'result-empty';
+  resultEl.innerHTML = '';
+
+  const allSlots = TEMPLATES[currentAsset.deviceType] || [];
+  const newUrls = {};
+
+  try {
+    for (let i = 0; i < slotKeys.length; i++) {
+      const slotKey = slotKeys[i];
+      const file = newFiles[slotKey];
+      progressText.textContent = `กำลังอัป ${i + 1}/${slotKeys.length} — ${PHOTO_LABELS[slotKey] || slotKey}`;
+
+      const blob = await compressImage(file);
+      const idx  = allSlots.indexOf(slotKey) + 1;
+      const fname = String(idx).padStart(2, '0') + '_' + slotKey + '.jpg';
+      const path  = `installations/${currentAsset.assetId}/${fname}`;
+      const ref   = storage.ref(path);
+      await ref.put(blob);
+      newUrls[slotKey] = await ref.getDownloadURL();
+
+      progressFill.style.width = Math.round(((i + 1) / slotKeys.length) * 100) + '%';
+    }
+
+    // Build Firestore update with dot notation
+    progressText.textContent = 'กำลังบันทึก Firestore...';
+    const update = {};
+    for (const slotKey of slotKeys) {
+      update['photos.' + slotKey] = newUrls[slotKey];
+    }
+    update.installer = { name: 'Desktop Upload', lineUserId: 'desktop' };
+
+    // Check if all template slots are now filled → mark completed
+    const finalPhotos = { ...(currentAsset.photos || {}) };
+    for (const slotKey of slotKeys) finalPhotos[slotKey] = newUrls[slotKey];
+    const allFilled = allSlots.every(s => !!finalPhotos[s]);
+    if (allFilled && currentAsset.status !== 'completed') {
+      update.status = 'completed';
+      update.completedAt = firebase.firestore.FieldValue.serverTimestamp();
+    }
+
+    await db.collection('installations').doc(currentAsset.docId).update(update);
+
+    progressFill.style.width = '100%';
+    progressText.textContent = 'เสร็จสิ้น';
+
+    // Refresh local state
+    currentAsset.photos = currentAsset.photos || {};
+    for (const slotKey of slotKeys) currentAsset.photos[slotKey] = newUrls[slotKey];
+    currentAsset.installer = { name: 'Desktop Upload', lineUserId: 'desktop' };
+    if (allFilled && currentAsset.status !== 'completed') {
+      currentAsset.status = 'completed';
+    }
+
+    // Update allAssets cache entry too
+    const cacheIdx = allAssets.findIndex(a => a.docId === currentAsset.docId);
+    if (cacheIdx >= 0) allAssets[cacheIdx] = currentAsset;
+
+    resultEl.className = 'upload-result result-ok';
+    resultEl.innerHTML = `✓ อัปโหลดสำเร็จ ${slotKeys.length} รูป${allFilled && update.status === 'completed' ? ' · เปลี่ยนสถานะเป็น "ติดตั้งแล้ว"' : ''}`;
+
+    cleanupPreviews();
+    newFiles = {};
+    updateFileSummary();
+
+    // Re-render header + grid so badges reset to "รูปเดิม"
+    renderUploadHeader(currentAsset);
+    renderPhotoGrid(currentAsset);
+
+  } catch (err) {
+    console.error(err);
+    resultEl.className = 'upload-result result-err';
+    resultEl.innerHTML = `✗ อัปโหลดไม่สำเร็จ: ${err.code || ''} ${err.message || 'unknown error'}`;
+  } finally {
+    submitBtn.disabled = Object.keys(newFiles).length === 0;
+    submitBtn.textContent = 'บันทึก';
+  }
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimer;
+function toast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type === 'error' ? ' error' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// expose for inline onclick
+window.selectAsset = selectAsset;
+</script>
+</body>
+</html>
