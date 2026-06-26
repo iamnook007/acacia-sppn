@@ -64,6 +64,20 @@
   .status-pending{background:var(--gray-100);color:var(--gray-600)}
   .empty{padding:48px 24px;text-align:center;color:var(--gray-400);font-size:0.92rem}
 
+  /* ===== FILTER TABS ===== */
+  .filter-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .filter-tab{padding:7px 16px;border-radius:999px;border:1.5px solid var(--gray-200);background:#fff;font-family:inherit;font-size:0.85rem;font-weight:600;color:var(--gray-600);cursor:pointer;transition:all 0.15s}
+  .filter-tab:hover{border-color:var(--blue);color:var(--blue)}
+  .filter-tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+  /* ===== TOOLBAR ===== */
+  .toolbar{background:#fff;border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .toolbar select{padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:0.88rem;color:var(--gray-800);background:#fff;cursor:pointer}
+  .toolbar select:focus{outline:none;border-color:var(--blue)}
+  .toolbar .toolbar-search{flex:1;min-width:200px;padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:0.88rem}
+  .toolbar .toolbar-search:focus{outline:none;border-color:var(--blue)}
+  .toolbar-stats{margin-left:auto;font-size:0.82rem;color:var(--gray-600);font-weight:600;white-space:nowrap}
+
   /* ===== UPLOAD SCREEN ===== */
   .btn-back{background:#fff;color:var(--blue);border:1.5px solid var(--blue);padding:8px 16px;border-radius:var(--radius-sm);font-family:inherit;font-weight:600;font-size:0.88rem;cursor:pointer;margin-bottom:16px}
   .btn-back:hover{background:var(--blue-light)}
@@ -148,9 +162,32 @@
   <div class="container">
     <!-- Search/Select -->
     <div id="page-search" class="page active">
-      <div class="search-bar">
-        <input id="search-input" type="text" placeholder="ค้นหา assetId / เลขกล่อง / หน่วยงาน / จังหวัด..." autocomplete="off" />
-        <div class="search-stats" id="search-stats">กำลังโหลด...</div>
+      <!-- TYPE TABS -->
+      <div class="filter-tabs" id="type-tabs">
+        <button class="filter-tab active" data-type="">ทั้งหมด</button>
+        <button class="filter-tab" data-type="PC">💻 PC</button>
+        <button class="filter-tab" data-type="Notebook">🖥 Notebook</button>
+        <button class="filter-tab" data-type="Tablet">📱 Tablet</button>
+        <button class="filter-tab" data-type="UPS2k">🔋 UPS 2kVA</button>
+      </div>
+      <!-- TOOLBAR -->
+      <div class="toolbar">
+        <select id="filter-region">
+          <option value="">ทุกภูมิภาค</option>
+          <option value="central">ส่วนกลาง</option>
+          <option value="provincial">ภูมิภาค</option>
+        </select>
+        <select id="filter-status">
+          <option value="">ทุกสถานะ</option>
+          <option value="pending">รอติดตั้ง</option>
+          <option value="completed">ติดตั้งแล้ว</option>
+        </select>
+        <select id="filter-flag">
+          <option value="">ทุกรายการ</option>
+          <option value="flagged">🚩 มีภาพต้องแก้</option>
+        </select>
+        <input type="text" id="search-input" class="toolbar-search" placeholder="ค้นหา assetId / เลขกล่อง / หน่วยงาน / จังหวัด..." autocomplete="off" />
+        <div class="toolbar-stats" id="search-stats">กำลังโหลด...</div>
       </div>
       <div id="asset-list" class="asset-list">
         <div class="empty">กำลังโหลดรายการ...</div>
@@ -261,6 +298,7 @@ let allAssets = [];
 let currentAsset = null;
 let newFiles = {};   // { slotKey: File }
 let previewUrls = []; // ObjectURLs to revoke on cleanup
+let currentTypeTab = '';
 
 // ============================================================
 // BOOT
@@ -281,7 +319,6 @@ async function loadAssets() {
   try {
     const snap = await db.collection('installations').orderBy('assetId').get();
     allAssets = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
-    document.getElementById('search-stats').textContent = `${allAssets.length} รายการ`;
     renderAssetList();
   } catch (err) {
     console.error(err);
@@ -313,19 +350,36 @@ function statusClass(s) {
 // ============================================================
 // SEARCH / LIST
 // ============================================================
-document.getElementById('search-input').addEventListener('input', renderAssetList);
-
 function renderAssetList() {
-  const q = document.getElementById('search-input').value.trim().toLowerCase();
-  const filtered = !q ? allAssets : allAssets.filter(a => {
-    const fields = [
-      a.assetId, a.boxNumber, a.location?.office, a.location?.province,
-    ].filter(Boolean).map(s => String(s).toLowerCase());
-    return fields.some(f => f.includes(q));
+  const q       = document.getElementById('search-input').value.trim().toLowerCase();
+  const region  = document.getElementById('filter-region').value;
+  const statusF = document.getElementById('filter-status').value;
+  const flagF   = document.getElementById('filter-flag').value;
+
+  const filtered = allAssets.filter(a => {
+    // Tab ประเภท
+    if (currentTypeTab) {
+      if (currentTypeTab === 'PC') { if (a.deviceType !== 'PC1' && a.deviceType !== 'PC2') return false; }
+      else if (a.deviceType !== currentTypeTab) return false;
+    }
+    // ภูมิภาค
+    if (region && a.location?.region !== region) return false;
+    // สถานะ: pending รวม pending+uploading
+    if (statusF === 'pending' && a.status === 'completed') return false;
+    if (statusF === 'completed' && a.status !== 'completed') return false;
+    // มีภาพต้องแก้
+    if (flagF === 'flagged' && !(a.flags && Object.keys(a.flags).length > 0)) return false;
+    // Search
+    if (q) {
+      const fields = [a.assetId, a.boxNumber, a.location?.office, a.location?.province]
+        .filter(Boolean).map(s => String(s).toLowerCase());
+      if (!fields.some(f => f.includes(q))) return false;
+    }
+    return true;
   });
 
-  const stats = document.getElementById('search-stats');
-  stats.textContent = q ? `${filtered.length} จาก ${allAssets.length} รายการ` : `${allAssets.length} รายการ`;
+  document.getElementById('search-stats').textContent =
+    `แสดง ${filtered.length} / ${allAssets.length} รายการ`;
 
   const list = document.getElementById('asset-list');
   if (!filtered.length) {
@@ -340,8 +394,21 @@ function renderAssetList() {
       <div class="asset-loc">${siteName(a.location)}</div>
       <div class="status-badge ${statusClass(a.status)}">${statusText(a.status)}</div>
     </div>
-  `).join('') + (filtered.length > 200 ? `<div class="empty">แสดง 200 รายการแรก — พิมพ์ค้นหาเพื่อกรอง</div>` : '');
+  `).join('') + (filtered.length > 200 ? `<div class="empty">แสดง 200 รายการแรก — ใช้ filter เพิ่มเพื่อกรอง</div>` : '');
 }
+
+document.getElementById('search-input').addEventListener('input', renderAssetList);
+document.getElementById('filter-region').addEventListener('change', renderAssetList);
+document.getElementById('filter-status').addEventListener('change', renderAssetList);
+document.getElementById('filter-flag').addEventListener('change', renderAssetList);
+document.getElementById('type-tabs').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-tab');
+  if (!btn) return;
+  document.querySelectorAll('#type-tabs .filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentTypeTab = btn.dataset.type;
+  renderAssetList();
+});
 
 // ============================================================
 // SELECT ASSET → UPLOAD SCREEN
