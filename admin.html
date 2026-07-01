@@ -364,6 +364,10 @@
       <option value="central">ส่วนกลาง</option>
       <option value="provincial">ภูมิภาค</option>
     </select>
+    <label id="lbl-province" style="display:none">จังหวัด:</label>
+    <select id="filter-province" style="display:none">
+      <option value="">ทุกจังหวัด</option>
+    </select>
     <label>สถานะ:</label>
     <select id="filter-status">
       <option value="">ทั้งหมด</option>
@@ -499,10 +503,21 @@ let allAssets = [];
 
 function badgeClass(t){return{PC1:'badge-pc',PC2:'badge-pc',Notebook:'badge-nb',UPS2k:'badge-ups2k',Tablet:'badge-tab'}[t]||'badge-pc';}
 function fmtDate(ts){if(!ts)return'-';const d=ts.toDate?ts.toDate():new Date(ts);return d.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'});}
-function siteName(loc){return loc?.region==='central'?(loc.office||loc.siteName||'ส่วนกลาง'):(loc?.province||'');}
+function siteName(loc){return loc?.siteName||loc?.office||loc?.province||'';}
 
 let toastT;
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2500);}
+
+function populateProvinceDropdown(){
+  const provinces=[...new Set(
+    allAssets
+      .filter(a=>a.location?.region==='provincial' && a.location?.province)
+      .map(a=>a.location.province)
+  )].sort((a,b)=>a.localeCompare(b,'th'));
+  const sel=document.getElementById('filter-province');
+  sel.innerHTML='<option value="">ทุกจังหวัด</option>'+
+    provinces.map(p=>`<option value="${p}">${p}</option>`).join('');
+}
 
 async function loadData(){
   try{
@@ -510,6 +525,7 @@ async function loadData(){
     allAssets = snap.docs.map(d=>({docId:d.id,...d.data()}));
     document.getElementById('last-update').textContent = 'อัปเดต: '+new Date().toLocaleTimeString('th-TH');
     renderStats();
+    populateProvinceDropdown();
     renderTable();
     renderProvinceMap(allAssets);
   }catch(err){
@@ -600,6 +616,8 @@ function renderTable(){
       else if(a.deviceType!==currentTypeTab) return false;
     }
     if(region && a.location?.region!==region) return false;
+    const provinceF=document.getElementById('filter-province').value;
+    if(provinceF && a.location?.province!==provinceF) return false;
     if(status && a.status!==status) return false;
     if(dateF){
       if(!a.completedAt) return false;
@@ -1005,7 +1023,15 @@ document.querySelectorAll('.tab').forEach(tab=>{
     renderTable();
   });
 });
-document.getElementById('filter-region').addEventListener('change',renderTable);
+document.getElementById('filter-region').addEventListener('change',()=>{
+  const v=document.getElementById('filter-region').value;
+  const show=(v===''||v==='provincial');
+  document.getElementById('lbl-province').style.display=show?'':'none';
+  document.getElementById('filter-province').style.display=show?'':'none';
+  if(!show) document.getElementById('filter-province').value='';
+  renderTable();
+});
+document.getElementById('filter-province').addEventListener('change',renderTable);
 document.getElementById('filter-status').addEventListener('change',renderTable);
 document.getElementById('filter-export').addEventListener('change',renderTable);
 document.getElementById('filter-flag').addEventListener('change',renderTable);
