@@ -488,7 +488,7 @@ function modelFor(deviceType, snKey){
 }
 const PHOTO_LABELS = {
   area:'บริเวณจุดติดตั้ง', install:'เปิดเครื่องพร้อมใช้งาน',
-  windowsActivate:'Windows — ลิขสิทธิ์แท้', msOffice:'MS Office — ลิขสิทธิ์แท้',
+  windowsActivate:'Windows พร้อมใช้งาน', msOffice:'MS Office พร้อมใช้งาน',
   snPc:'S/N เครื่อง', stickerPc:'สติกเกอร์รับประกัน',
   snMonitor:'S/N จอภาพ', stickerMonitor:'สติกเกอร์รับประกัน (จอภาพ)',
   snUps:'S/N UPS', stickerUps:'สติกเกอร์รับประกัน',
@@ -921,6 +921,9 @@ async function buildReportHtml(data){
   let pagesHtml='';
   let photoNum=0;
   pages.forEach((slots,pi)=>{
+    const cols=slots.length<=2?slots.length:2;
+    const rows=Math.ceil(slots.length/cols);
+    const rowHeight=rows>=3?68:rows===2?90:120;
     const grid=slots.map(key=>{
       const url=photoData[key]||'';
       photoNum++;
@@ -934,7 +937,7 @@ async function buildReportHtml(data){
         <tr><td class="label">ที่อยู่</td><td colspan="3">${loc.address||'-'}</td></tr>
         ${snRowHtml}
       </table>
-      <div class="photo-grid cols-${slots.length<=2?slots.length:2}" style="grid-template-rows:repeat(${Math.ceil(slots.length/(slots.length<=2?slots.length:2))},83mm)">${grid}</div>
+      <div class="photo-grid cols-${cols}" style="grid-template-rows:repeat(${rows},${rowHeight}mm)">${grid}</div>
       <div class="footer">สัญญาเลขที่ 20/69 | Acacia Intertech Co., Ltd. <span style="float:right">${data.assetId} หน้า ${pi+1}/${pages.length}</span></div>
     </div>`;
   });
