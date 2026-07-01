@@ -274,11 +274,11 @@ const storage = firebase.storage();
 // TEMPLATES + LABELS
 // ============================================================
 const TEMPLATES = {
-  PC1:      ['area','install','windowsActivate','msOffice','snPc','stickerPc','snMonitor','stickerMonitor','snUps','stickerUps'],
-  PC2:      ['area','install','windowsActivate','msOffice','snPc','stickerPc','snMonitor','stickerMonitor','snUps','stickerUps'],
-  Notebook: ['area','install','windowsActivate','msOffice','snPc','stickerPc'],
-  Tablet:   ['area','install','snPc','stickerPc'],
-  UPS2k:    ['installPlug','area','snUps','stickerUps'],
+  PC1:      ['area','install','windowsActivate','msOffice','snPc','stickerPc','snMonitor','stickerMonitor','snUps','stickerUps','installDoc'],
+  PC2:      ['area','install','windowsActivate','msOffice','snPc','stickerPc','snMonitor','stickerMonitor','snUps','stickerUps','installDoc'],
+  Notebook: ['area','install','windowsActivate','msOffice','snPc','stickerPc','installDoc'],
+  Tablet:   ['area','install','snPc','stickerPc','installDoc'],
+  UPS2k:    ['installPlug','area','snUps','stickerUps','installDoc'],
 };
 const PHOTO_LABELS = {
   area:'บริเวณจุดติดตั้ง', install:'เปิดเครื่องพร้อมใช้งาน',
@@ -286,7 +286,7 @@ const PHOTO_LABELS = {
   snPc:'S/N เครื่อง', stickerPc:'สติกเกอร์รับประกัน',
   snMonitor:'S/N จอภาพ', stickerMonitor:'สติกเกอร์รับประกัน (จอภาพ)',
   snUps:'S/N UPS', stickerUps:'สติกเกอร์รับประกัน',
-  installPlug:'อุปกรณ์พร้อมติดตั้ง',
+  installPlug:'อุปกรณ์พร้อมติดตั้ง', installDoc:'ใบติดตั้ง',
 };
 const TEMPLATE_LABEL = {
   PC1:'PC + UPS', PC2:'PC', Notebook:'Notebook', Tablet:'iPad', UPS2k:'UPS 2kVA',

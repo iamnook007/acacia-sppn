@@ -492,14 +492,14 @@ const PHOTO_LABELS = {
   snPc:'S/N เครื่อง', stickerPc:'สติกเกอร์รับประกัน',
   snMonitor:'S/N จอภาพ', stickerMonitor:'สติกเกอร์รับประกัน (จอภาพ)',
   snUps:'S/N UPS', stickerUps:'สติกเกอร์รับประกัน',
-  installPlug:'อุปกรณ์พร้อมติดตั้ง',
+  installPlug:'อุปกรณ์พร้อมติดตั้ง', installDoc:'ใบติดตั้ง',
 };
 const TEMPLATE_PHOTOS = {
-  PC1:     ['area','install','windowsActivate','msOffice','snPc','stickerPc','snMonitor','stickerMonitor','snUps','stickerUps'],
-  PC2:     ['area','install','windowsActivate','msOffice','snPc','stickerPc','snMonitor','stickerMonitor','snUps','stickerUps'],
-  Notebook:['area','install','windowsActivate','msOffice','snPc','stickerPc'],
-  Tablet:  ['area','install','snPc','stickerPc'],
-  UPS2k:   ['installPlug','area','snUps','stickerUps'],
+  PC1:     ['area','install','windowsActivate','msOffice','snPc','stickerPc','snMonitor','stickerMonitor','snUps','stickerUps','installDoc'],
+  PC2:     ['area','install','windowsActivate','msOffice','snPc','stickerPc','snMonitor','stickerMonitor','snUps','stickerUps','installDoc'],
+  Notebook:['area','install','windowsActivate','msOffice','snPc','stickerPc','installDoc'],
+  Tablet:  ['area','install','snPc','stickerPc','installDoc'],
+  UPS2k:   ['installPlug','area','snUps','stickerUps','installDoc'],
 };
 
 let allAssets = [];
@@ -941,7 +941,7 @@ async function buildReportHtml(data){
       <div class="footer">สัญญาเลขที่ 20/69 | Acacia Intertech Co., Ltd. <span style="float:right">${data.assetId} หน้า ${pi+1}/${pages.length}</span></div>
     </div>`;
   });
-  return `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">
+  return `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>${data.assetId||'report'}</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
