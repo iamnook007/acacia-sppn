@@ -687,19 +687,21 @@ const TEMPLATES = {
       {
         title: 'หน้า 1 — PC & MS Office',
         slots: [
-          { key: 'install',   label: 'เครื่องเปิดพร้อมใช้งาน' },
-          { key: 'msOffice',  label: 'หน้าจอ MS Office' },
-          { key: 'snPc',      label: 'S/N PC (ข้างเครื่อง)' },
-          { key: 'stickerPc', label: 'Sticker PC' },
+          { key: 'area',            label: 'บริเวณจุดติดตั้ง' },
+          { key: 'install',         label: 'เครื่องเปิดพร้อมใช้งาน' },
+          { key: 'windowsActivate', label: 'Windows — ลิขสิทธิ์แท้' },
+          { key: 'msOffice',        label: 'MS Office — ลิขสิทธิ์แท้' },
+          { key: 'snPc',            label: 'S/N PC (ข้างเครื่อง)' },
+          { key: 'stickerPc',       label: 'สติกเกอร์รับประกัน' },
         ],
       },
       {
         title: 'หน้า 2 — จอ & UPS',
         slots: [
           { key: 'snMonitor',      label: 'S/N จอภาพ' },
-          { key: 'stickerMonitor', label: 'Sticker จอภาพ' },
+          { key: 'stickerMonitor', label: 'สติกเกอร์รับประกัน (จอภาพ)' },
           { key: 'snUps',          label: 'S/N UPS 800VA' },
-          { key: 'stickerUps',     label: 'Sticker UPS' },
+          { key: 'stickerUps',     label: 'สติกเกอร์รับประกัน (UPS)' },
         ],
       },
     ],
@@ -710,29 +712,34 @@ const TEMPLATES = {
     ],
   },
   PC2: {
-    label: 'PC (ไม่มี UPS)',
+    label: 'PC + UPS',
     badge: 'badge-pc',
     pages: [
       {
         title: 'หน้า 1 — PC & MS Office',
         slots: [
-          { key: 'install',        label: 'เครื่องเปิดพร้อมใช้งาน' },
-          { key: 'msOffice',       label: 'หน้าจอ MS Office' },
-          { key: 'snPc',           label: 'S/N PC' },
-          { key: 'stickerPc',      label: 'Sticker PC' },
+          { key: 'area',            label: 'บริเวณจุดติดตั้ง' },
+          { key: 'install',         label: 'เครื่องเปิดพร้อมใช้งาน' },
+          { key: 'windowsActivate', label: 'Windows — ลิขสิทธิ์แท้' },
+          { key: 'msOffice',        label: 'MS Office — ลิขสิทธิ์แท้' },
+          { key: 'snPc',            label: 'S/N PC' },
+          { key: 'stickerPc',       label: 'สติกเกอร์รับประกัน' },
         ],
       },
       {
-        title: 'หน้า 2 — จอภาพ',
+        title: 'หน้า 2 — จอ & UPS',
         slots: [
           { key: 'snMonitor',      label: 'S/N จอภาพ' },
-          { key: 'stickerMonitor', label: 'Sticker จอภาพ' },
+          { key: 'stickerMonitor', label: 'สติกเกอร์รับประกัน (จอภาพ)' },
+          { key: 'snUps',          label: 'S/N UPS 800VA' },
+          { key: 'stickerUps',     label: 'สติกเกอร์รับประกัน (UPS)' },
         ],
       },
     ],
     snFields: [
       { key: 'pc',      label: 'PC' },
       { key: 'monitor', label: 'จอ' },
+      { key: 'ups',     label: 'UPS' },
     ],
   },
   Notebook: {
@@ -742,10 +749,12 @@ const TEMPLATES = {
       {
         title: 'หน้า 1 — Notebook',
         slots: [
-          { key: 'install',   label: 'เครื่องเปิดพร้อมใช้งาน' },
-          { key: 'msOffice',  label: 'หน้าจอ MS Office' },
-          { key: 'snPc',      label: 'S/N เครื่อง (ใต้เครื่อง)' },
-          { key: 'stickerPc', label: 'Sticker' },
+          { key: 'area',            label: 'บริเวณจุดติดตั้ง' },
+          { key: 'install',         label: 'เครื่องเปิดพร้อมใช้งาน' },
+          { key: 'windowsActivate', label: 'Windows — ลิขสิทธิ์แท้' },
+          { key: 'msOffice',        label: 'MS Office — ลิขสิทธิ์แท้' },
+          { key: 'snPc',            label: 'S/N เครื่อง (ใต้เครื่อง)' },
+          { key: 'stickerPc',       label: 'สติกเกอร์รับประกัน' },
         ],
       },
     ],
@@ -760,9 +769,10 @@ const TEMPLATES = {
       {
         title: 'หน้า 1 — UPS 2kVA',
         slots: [
-          { key: 'snUps',      label: 'UPS วางในตู้ Rack' },
-          { key: 'stickerUps', label: 'S/N UPS' },
-          { key: 'plug',       label: 'ปลั๊ก ELECTON EP-GS5605' },
+          { key: 'installPlug', label: 'อุปกรณ์พร้อมติดตั้ง (UPS+ปลั๊ก)' },
+          { key: 'area',        label: 'บริเวณจุดติดตั้ง' },
+          { key: 'snUps',       label: 'S/N UPS' },
+          { key: 'stickerUps',  label: 'สติกเกอร์รับประกัน' },
         ],
       },
     ],
@@ -777,10 +787,10 @@ const TEMPLATES = {
       {
         title: 'หน้า 1 — iPad',
         slots: [
+          { key: 'area',      label: 'บริเวณจุดติดตั้ง' },
           { key: 'install',   label: 'iPad เปิดเครื่อง' },
-          { key: 'msOffice',  label: 'หน้า iPadOS' },
           { key: 'snPc',      label: 'S/N iPad' },
-          { key: 'stickerPc', label: 'Sticker' },
+          { key: 'stickerPc', label: 'สติกเกอร์รับประกัน' },
         ],
       },
     ],

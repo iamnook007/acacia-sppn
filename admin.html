@@ -466,7 +466,7 @@ const TEMPLATE_LABELS = { PC1:'PC + UPS', PC2:'PC', Notebook:'Notebook', Tablet:
 // slot SN ที่เครื่องแต่ละประเภท "มีตามสเปค" (ไม่อิงว่า S/N กรอกแล้วหรือยัง) ใช้ map รุ่นในหัว PDF
 const DEVICE_SN_SLOTS = {
   PC1:      ['pc','monitor','ups'],
-  PC2:      ['pc','monitor'],
+  PC2:      ['pc','monitor','ups'],
   Notebook: ['pc'],
   Tablet:   ['pc'],
   UPS2k:    ['ups'],
@@ -475,7 +475,7 @@ const DEVICE_SN_SLOTS = {
 // รุ่นอุปกรณ์ — จัดซื้อล็อตเดียว spec เดียวกันทั้งหมด → hardcode ตาม deviceType + snKey
 function modelFor(deviceType, snKey){
   if(snKey==='pc'){
-    if(deviceType==='PC1'||deviceType==='PC2') return 'ASUS ExpertCenter 501';
+    if(deviceType==='PC1'||deviceType==='PC2') return 'ASUS ExpertCenter D501';
     if(deviceType==='Notebook') return 'ASUS ExpertBook B1 (B1403)';
     if(deviceType==='Tablet')   return 'Apple iPad Air';
   }
@@ -487,16 +487,19 @@ function modelFor(deviceType, snKey){
   return '';
 }
 const PHOTO_LABELS = {
-  install:'เครื่องเปิด', msOffice:'MS Office', snPc:'S/N เครื่อง', stickerPc:'Sticker เครื่อง',
-  snMonitor:'S/N จอ', stickerMonitor:'Sticker จอ', snUps:'S/N UPS', stickerUps:'Sticker UPS',
-  plug:'ปลั๊ก ELECTON',
+  area:'บริเวณจุดติดตั้ง', install:'เปิดเครื่องพร้อมใช้งาน',
+  windowsActivate:'Windows — ลิขสิทธิ์แท้', msOffice:'MS Office — ลิขสิทธิ์แท้',
+  snPc:'S/N เครื่อง', stickerPc:'สติกเกอร์รับประกัน',
+  snMonitor:'S/N จอภาพ', stickerMonitor:'สติกเกอร์รับประกัน (จอภาพ)',
+  snUps:'S/N UPS', stickerUps:'สติกเกอร์รับประกัน',
+  installPlug:'อุปกรณ์พร้อมติดตั้ง',
 };
 const TEMPLATE_PHOTOS = {
-  PC1:['install','msOffice','snPc','stickerPc','snMonitor','stickerMonitor','snUps','stickerUps'],
-  PC2:['install','msOffice','snPc','stickerPc','snMonitor','stickerMonitor'],
-  Notebook:['install','msOffice','snPc','stickerPc'],
-  Tablet:['install','msOffice','snPc','stickerPc'],
-  UPS2k:['snUps','stickerUps','plug'],
+  PC1:     ['area','install','windowsActivate','msOffice','snPc','stickerPc','snMonitor','stickerMonitor','snUps','stickerUps'],
+  PC2:     ['area','install','windowsActivate','msOffice','snPc','stickerPc','snMonitor','stickerMonitor','snUps','stickerUps'],
+  Notebook:['area','install','windowsActivate','msOffice','snPc','stickerPc'],
+  Tablet:  ['area','install','snPc','stickerPc'],
+  UPS2k:   ['installPlug','area','snUps','stickerUps'],
 };
 
 let allAssets = [];
@@ -837,11 +840,11 @@ function closeModal(){document.getElementById('modal-bg').classList.remove('show
 // PDF — print via hidden iframe (desktop)
 // ============================================================
 const TEMPLATE_PHOTOS_PAGES = {
-  PC1:[['install','msOffice','snPc','stickerPc'],['snMonitor','stickerMonitor','snUps','stickerUps']],
-  PC2:[['install','msOffice','snPc','stickerPc'],['snMonitor','stickerMonitor']],
-  Notebook:[['install','msOffice','snPc','stickerPc']],
-  Tablet:[['install','msOffice','snPc','stickerPc']],
-  UPS2k:[['snUps','stickerUps','plug']],
+  PC1:     [['area','install','windowsActivate','msOffice','snPc','stickerPc'],['snMonitor','stickerMonitor','snUps','stickerUps']],
+  PC2:     [['area','install','windowsActivate','msOffice','snPc','stickerPc'],['snMonitor','stickerMonitor','snUps','stickerUps']],
+  Notebook:[['area','install','windowsActivate','msOffice','snPc','stickerPc']],
+  Tablet:  [['area','install','snPc','stickerPc']],
+  UPS2k:   [['installPlug','area','snUps','stickerUps']],
 };
 const TEMPLATE_FULL={PC1:'PC แบบที่ 1 + UPS 800VA',PC2:'PC แบบที่ 2',Notebook:'Notebook',Tablet:'Tablet (iPad)',UPS2k:'UPS 2kVA'};
 
@@ -861,6 +864,17 @@ function imgToDataUrl(url){
     img.onerror=()=>{console.warn('img load error',url);resolve('');};
     img.src=url;
   });
+}
+
+function dynCaption(key,deviceType,snObj){
+  const snKeyMap={snPc:'pc',snMonitor:'monitor',snUps:'ups'};
+  const snKey=snKeyMap[key];
+  if(!snKey) return PHOTO_LABELS[key]||key;
+  const model=modelFor(deviceType,snKey);
+  const snVal=(snObj||{})[snKey]||'';
+  if(model&&snVal) return `${model} : ${snVal}`;
+  if(model) return model;
+  return PHOTO_LABELS[key]||key;
 }
 
 async function buildReportHtml(data){
@@ -910,7 +924,7 @@ async function buildReportHtml(data){
     const grid=slots.map(key=>{
       const url=photoData[key]||'';
       photoNum++;
-      return `<div class="photo-slot">${url?`<img src="${url}" />`:`<div class="no-photo">ไม่มีภาพ</div>`}<div class="photo-caption">${photoNum}. ${PHOTO_LABELS[key]||key}</div></div>`;
+      return `<div class="photo-slot">${url?`<img src="${url}" />`:`<div class="no-photo">ไม่มีภาพ</div>`}<div class="photo-caption">${photoNum}. ${dynCaption(key,tKey,sn)}</div></div>`;
     }).join('');
     pagesHtml+=`<div class="page">
       <div class="page-header"><div><div class="title">รายงานการติดตั้งครุภัณฑ์</div><div class="subtitle">สำนักงานปลัดกระทรวงพลังงาน (สป.พน.) ปีงบประมาณ 2569</div></div>
