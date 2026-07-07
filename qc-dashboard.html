@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>QC Dashboard — ตรวจรับครุภัณฑ์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root {
+  --blue:#1B4F8A; --blue-dark:#143D6B; --blue-light:#EBF2FB;
+  --green:#1A7A4A; --green-light:#E8F5EE;
+  --amber:#D97706; --amber-light:#FEF3C7;
+  --red:#DC2626;
+  --gray-50:#F8FAFC; --gray-100:#F1F5F9; --gray-200:#E2E8F0;
+  --gray-400:#94A3B8; --gray-600:#475569; --gray-800:#1E293B;
+  --radius:12px; --shadow:0 2px 12px rgba(0,0,0,0.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--gray-100);color:var(--gray-800);font-size:14px}
+
+/* TOPBAR */
+.topbar{background:var(--blue);color:#fff;padding:14px 20px;position:sticky;top:0;z-index:50}
+.topbar h1{font-size:1.05rem;font-weight:700}
+.topbar .sub{font-size:0.78rem;opacity:0.75;margin-top:1px}
+
+/* LAYOUT */
+.container{max-width:960px;margin:0 auto;padding:16px}
+.card{background:#fff;border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:16px}
+.section-title{font-size:0.78rem;font-weight:700;color:var(--gray-600);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px}
+
+/* OVERVIEW CARD */
+.overview-main{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:10px}
+.overview-count{font-size:2.4rem;font-weight:700;color:var(--blue);line-height:1}
+.overview-label{font-size:0.85rem;color:var(--gray-600);margin-top:4px}
+.overview-pct{font-size:1rem;font-weight:700;color:var(--blue)}
+.progress-bar-wrap{height:10px;background:var(--gray-200);border-radius:5px;overflow:hidden;margin-bottom:16px}
+.progress-bar{height:100%;background:var(--blue);border-radius:5px;transition:width 0.4s ease}
+.breakdown{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.bk-cell{background:var(--gray-50);border-radius:10px;padding:12px;text-align:center}
+.bk-label{font-size:0.72rem;color:var(--gray-400);font-weight:700;text-transform:uppercase;letter-spacing:0.04em}
+.bk-val{font-size:1.1rem;font-weight:700;margin-top:4px}
+.bk-val.pc1{color:var(--blue)}
+.bk-val.pc2{color:var(--blue-dark,#143D6B)}
+.bk-val.nb{color:var(--green)}
+.bk-sub{font-size:0.72rem;color:var(--gray-400);margin-top:1px}
+
+/* FILTER BAR */
+.filter-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.filter-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:130px}
+.filter-group label{font-size:0.78rem;font-weight:600;color:var(--gray-600)}
+.filter-group input,.filter-group select{
+  padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:8px;
+  font-family:inherit;font-size:0.9rem;color:var(--gray-800);background:#fff;
+}
+.btn-refresh{
+  background:var(--blue);color:#fff;border:none;border-radius:8px;
+  padding:9px 18px;font-family:inherit;font-size:0.9rem;font-weight:600;cursor:pointer;
+  white-space:nowrap;align-self:flex-end;
+}
+.btn-refresh:hover{background:var(--blue-dark)}
+
+/* STAFF TABLE */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{background:var(--gray-50);padding:10px 12px;text-align:left;font-size:0.75rem;font-weight:700;
+   color:var(--gray-600);text-transform:uppercase;letter-spacing:0.03em;border-bottom:2px solid var(--gray-200)}
+td{padding:10px 12px;border-bottom:1px solid var(--gray-100);font-size:0.88rem}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--gray-50)}
+.rank{font-size:0.78rem;color:var(--gray-400);font-weight:700}
+.staff-name{font-weight:700;color:var(--gray-800)}
+.num{font-weight:700;color:var(--blue);text-align:right}
+.num.today{color:var(--green)}
+.num.avg{color:var(--amber)}
+
+/* QC LIST */
+.qc-item{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:11px 0;border-bottom:1px solid var(--gray-100);
+}
+.qc-item:last-child{border-bottom:none}
+.qc-time{font-size:0.78rem;font-weight:700;color:var(--gray-400);min-width:42px;padding-top:2px}
+.qc-body{flex:1;min-width:0}
+.qc-asset{font-size:0.95rem;font-weight:700;color:var(--blue)}
+.qc-detail{font-size:0.8rem;color:var(--gray-600);margin-top:2px}
+.qc-site{font-size:0.78rem;color:var(--gray-400);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qc-by{font-size:0.78rem;color:var(--gray-600);min-width:80px;text-align:right;padding-top:2px;flex-shrink:0}
+.badge{display:inline-block;font-size:0.7rem;font-weight:700;padding:2px 7px;border-radius:20px;margin-right:4px}
+.badge-pc1{background:var(--blue-light);color:var(--blue)}
+.badge-pc2{background:#EDE9FE;color:#5B21B6}
+.badge-nb{background:var(--green-light);color:var(--green)}
+
+/* LOADING / ERROR */
+.loading{text-align:center;padding:40px;color:var(--gray-400)}
+.error-box{background:#FEE2E2;color:#991B1B;border-radius:10px;padding:14px 16px;font-size:0.88rem;line-height:1.6}
+.empty{text-align:center;padding:28px;color:var(--gray-400);font-size:0.9rem}
+
+/* COUNT BADGE */
+.list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.list-count{font-size:0.8rem;color:var(--gray-400);font-weight:600}
+
+@media(max-width:480px){
+  .breakdown{grid-template-columns:repeat(3,1fr)}
+  .bk-val{font-size:0.95rem}
+  th,td{padding:8px 8px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>QC Dashboard — ตรวจรับครุภัณฑ์</h1>
+  <div class="sub">สำนักงานปลัดกระทรวงพลังงาน (สป.พน.) · โหลดล่าสุด: <span id="last-loaded">—</span></div>
+</div>
+
+<div class="container">
+
+  <!-- ส่วนที่ 1: ภาพรวม -->
+  <div class="card" id="overview-card">
+    <div class="section-title">ภาพรวมทั้งโครงการ</div>
+    <div class="loading">กำลังโหลด...</div>
+  </div>
+
+  <!-- ส่วนที่ 2: Filter -->
+  <div class="card">
+    <div class="section-title">กรองข้อมูล</div>
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label for="filter-date">วันที่</label>
+        <input type="date" id="filter-date"/>
+      </div>
+      <div class="filter-group">
+        <label for="filter-staff">เจ้าหน้าที่</label>
+        <select id="filter-staff">
+          <option value="">— ทั้งหมด —</option>
+        </select>
+      </div>
+      <button class="btn-refresh" id="btn-refresh">↺ รีเฟรช</button>
+    </div>
+  </div>
+
+  <!-- ส่วนที่ 3: ประสิทธิภาพเจ้าหน้าที่ -->
+  <div class="card">
+    <div class="section-title">สรุปประสิทธิภาพเจ้าหน้าที่</div>
+    <div id="staff-table"><div class="loading">กำลังโหลด...</div></div>
+  </div>
+
+  <!-- ส่วนที่ 4: รายการ QC -->
+  <div class="card">
+    <div class="list-header">
+      <div class="section-title" style="margin-bottom:0">รายการ QC</div>
+      <div class="list-count" id="list-count"></div>
+    </div>
+    <div id="qc-list"><div class="loading">กำลังโหลด...</div></div>
+  </div>
+
+</div>
+
+<script>
+const FIREBASE_CONFIG = {
+  apiKey:            'AIzaSyA-F0uH5WcyNpxpUNe7oXDG0_z4vqczW50',
+  authDomain:        'acacia-sppn.firebaseapp.com',
+  projectId:         'acacia-sppn',
+  storageBucket:     'acacia-sppn.firebasestorage.app',
+  messagingSenderId: '846071482521',
+  appId:             '1:846071482521:web:00f846689dec1029d0d008',
+};
+const RECAPTCHA_SITE_KEY = '6LeCPyYtAAAAAPPwl0IisCVWN8l3GpJOfHL-_OEO';
+
+const TOTALS = { PC1: 381, PC2: 3, Notebook: 77, total: 461 };
+const DEVICE_LABEL = { PC1: 'PC1', PC2: 'PC2', Notebook: 'NB' };
+const BADGE_CLASS  = { PC1: 'badge-pc1', PC2: 'badge-pc2', Notebook: 'badge-nb' };
+
+firebase.initializeApp(FIREBASE_CONFIG);
+firebase.appCheck().activate(RECAPTCHA_SITE_KEY, true);
+const db = firebase.firestore();
+
+// ============================================================
+// STATE
+// ============================================================
+let allDocs   = [];  // PC1+PC2+Notebook (up to 461)
+let qcDocs    = [];  // subset with qc.checkedBy set
+let filterDate  = todayStr();
+let filterStaff = '';
+
+// ============================================================
+// HELPERS
+// ============================================================
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function dateOf(ts) {
+  if (!ts) return '';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function fmtTime(ts) {
+  if (!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+}
+
+function pct(n, total) {
+  return total > 0 ? ((n / total) * 100).toFixed(1) : '0.0';
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.getElementById('filter-date').value = filterDate;
+
+document.getElementById('filter-date').addEventListener('change', e => {
+  filterDate = e.target.value;
+  renderAll();
+});
+
+document.getElementById('filter-staff').addEventListener('change', e => {
+  filterStaff = e.target.value;
+  renderAll();
+});
+
+document.getElementById('btn-refresh').addEventListener('click', loadData);
+
+// ============================================================
+// LOAD
+// ============================================================
+async function loadData() {
+  document.getElementById('overview-card').innerHTML =
+    '<div class="section-title">ภาพรวมทั้งโครงการ</div><div class="loading">กำลังโหลด...</div>';
+  document.getElementById('staff-table').innerHTML = '<div class="loading">กำลังโหลด...</div>';
+  document.getElementById('qc-list').innerHTML     = '<div class="loading">กำลังโหลด...</div>';
+
+  try {
+    await firebase.auth().signInAnonymously();
+  } catch (e) {
+    console.warn('auth', e);
+  }
+
+  try {
+    const snap = await db.collection('installations')
+      .where('deviceType', 'in', ['PC1', 'PC2', 'Notebook'])
+      .get();
+    allDocs = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+    qcDocs  = allDocs.filter(d => d.qc?.checkedBy);
+
+    const now = new Date();
+    document.getElementById('last-loaded').textContent =
+      now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    populateStaffDropdown();
+    renderAll();
+  } catch (err) {
+    console.error(err);
+    const errHtml = `
+      <div class="error-box">
+        <strong>โหลดข้อมูลไม่สำเร็จ</strong><br/>
+        ${err.message}<br/><br/>
+        ถ้า error เกี่ยวกับ index ให้เปิด Firebase Console → Firestore → Indexes
+        แล้วสร้าง composite index: <code>deviceType ASC</code>
+        หรือคลิก link ใน browser console
+      </div>`;
+    document.getElementById('overview-card').innerHTML =
+      '<div class="section-title">ภาพรวมทั้งโครงการ</div>' + errHtml;
+    document.getElementById('staff-table').innerHTML = errHtml;
+    document.getElementById('qc-list').innerHTML     = errHtml;
+  }
+}
+
+// ============================================================
+// DROPDOWN
+// ============================================================
+function populateStaffDropdown() {
+  const names = [...new Set(qcDocs.map(d => d.qc.checkedBy))].sort();
+  const sel   = document.getElementById('filter-staff');
+  const prev  = sel.value;
+  sel.innerHTML = '<option value="">— ทั้งหมด —</option>'
+    + names.map(n => `<option value="${n}"${n === prev ? ' selected' : ''}>${n}</option>`).join('');
+  filterStaff = sel.value;
+}
+
+// ============================================================
+// RENDER ALL
+// ============================================================
+function renderAll() {
+  renderOverview();
+  renderStaffTable();
+  renderQCList();
+}
+
+// ============================================================
+// OVERVIEW
+// ============================================================
+function renderOverview() {
+  const qcPC1 = qcDocs.filter(d => d.deviceType === 'PC1').length;
+  const qcPC2 = qcDocs.filter(d => d.deviceType === 'PC2').length;
+  const qcNB  = qcDocs.filter(d => d.deviceType === 'Notebook').length;
+  const qcAll = qcDocs.length;
+  const p     = pct(qcAll, TOTALS.total);
+
+  document.getElementById('overview-card').innerHTML = `
+    <div class="section-title">ภาพรวมทั้งโครงการ</div>
+    <div class="overview-main">
+      <div>
+        <div class="overview-count">${qcAll}<span style="font-size:1.2rem;color:var(--gray-400)"> / ${TOTALS.total}</span></div>
+        <div class="overview-label">เครื่องผ่าน QC แล้ว</div>
+      </div>
+      <div class="overview-pct">${p}%</div>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" style="width:${p}%"></div>
+    </div>
+    <div class="breakdown">
+      <div class="bk-cell">
+        <div class="bk-label">PC1</div>
+        <div class="bk-val pc1">${qcPC1} / ${TOTALS.PC1}</div>
+        <div class="bk-sub">${pct(qcPC1,TOTALS.PC1)}%</div>
+      </div>
+      <div class="bk-cell">
+        <div class="bk-label">PC2</div>
+        <div class="bk-val pc2">${qcPC2} / ${TOTALS.PC2}</div>
+        <div class="bk-sub">${pct(qcPC2,TOTALS.PC2)}%</div>
+      </div>
+      <div class="bk-cell">
+        <div class="bk-label">Notebook</div>
+        <div class="bk-val nb">${qcNB} / ${TOTALS.Notebook}</div>
+        <div class="bk-sub">${pct(qcNB,TOTALS.Notebook)}%</div>
+      </div>
+    </div>`;
+}
+
+// ============================================================
+// STAFF TABLE
+// ============================================================
+function renderStaffTable() {
+  if (qcDocs.length === 0) {
+    document.getElementById('staff-table').innerHTML = '<div class="empty">ยังไม่มีข้อมูล QC</div>';
+    return;
+  }
+
+  const staffMap = {};
+  for (const doc of qcDocs) {
+    const name = doc.qc.checkedBy;
+    if (!staffMap[name]) staffMap[name] = { total: 0, selectedDate: 0, days: new Set() };
+    staffMap[name].total++;
+    const d = dateOf(doc.qc.checkedAt);
+    if (d === filterDate) staffMap[name].selectedDate++;
+    if (d) staffMap[name].days.add(d);
+  }
+
+  const rows = Object.entries(staffMap)
+    .map(([name, s]) => ({
+      name,
+      total:        s.total,
+      selectedDate: s.selectedDate,
+      avgPerDay:    s.days.size > 0 ? (s.total / s.days.size).toFixed(1) : '—',
+    }))
+    .sort((a, b) => b.total - a.total);
+
+  const dateTh = new Date(filterDate + 'T00:00:00')
+    .toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+
+  document.getElementById('staff-table').innerHTML = `
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>ชื่อเจ้าหน้าที่</th>
+            <th style="text-align:right">รวมทั้งโครงการ</th>
+            <th style="text-align:right">${dateTh}</th>
+            <th style="text-align:right">เฉลี่ย/วัน</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map((r, i) => `
+            <tr>
+              <td class="rank">${i + 1}</td>
+              <td class="staff-name">${r.name}</td>
+              <td class="num">${r.total}</td>
+              <td class="num today">${r.selectedDate || '—'}</td>
+              <td class="num avg">${r.avgPerDay}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ============================================================
+// QC LIST
+// ============================================================
+function renderQCList() {
+  const filtered = qcDocs
+    .filter(d => {
+      const dateMatch  = dateOf(d.qc.checkedAt) === filterDate;
+      const staffMatch = !filterStaff || d.qc.checkedBy === filterStaff;
+      return dateMatch && staffMatch;
+    })
+    .sort((a, b) => {
+      const ta = a.qc.checkedAt?.toMillis?.() ?? 0;
+      const tb = b.qc.checkedAt?.toMillis?.() ?? 0;
+      return tb - ta;
+    });
+
+  const shown = filtered.slice(0, 100);
+  document.getElementById('list-count').textContent =
+    filtered.length > 100
+      ? `แสดง 100 / ${filtered.length} รายการ`
+      : `${filtered.length} รายการ`;
+
+  if (shown.length === 0) {
+    document.getElementById('qc-list').innerHTML = '<div class="empty">ไม่มีรายการที่ตรงกับเงื่อนไข</div>';
+    return;
+  }
+
+  document.getElementById('qc-list').innerHTML = shown.map(d => {
+    const site   = d.location?.siteName || d.location?.office || d.location?.province || '—';
+    const badge  = BADGE_CLASS[d.deviceType] || 'badge-pc1';
+    const devLbl = DEVICE_LABEL[d.deviceType] || d.deviceType;
+    return `
+      <div class="qc-item">
+        <div class="qc-time">${fmtTime(d.qc.checkedAt)}</div>
+        <div class="qc-body">
+          <div class="qc-asset">
+            <span class="badge ${badge}">${devLbl}</span>${d.assetId || '—'}
+          </div>
+          <div class="qc-detail">กล่อง ${d.boxNumber || '—'}</div>
+          <div class="qc-site">${site}</div>
+        </div>
+        <div class="qc-by">${d.qc.checkedBy}</div>
+      </div>`;
+  }).join('');
+}
+
+// ============================================================
+// START
+// ============================================================
+loadData();
+</script>
+</body>
+</html>
