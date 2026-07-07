@@ -275,6 +275,7 @@
     .toast.show { opacity: 1; }
     .toast.success { background: var(--green); }
     .toast.error { background: var(--red); }
+    .toast.gray { background: #546E7A; color: white; }
 
     /* ===== LOADING ===== */
     .loading-overlay {
@@ -1178,7 +1179,7 @@ async function startScan() {
     const doc  = snap.docs[0];
     const data = doc.data();
     if (data.status === 'completed') {
-      showToast(`${data.assetId} ติดตั้งเสร็จแล้ว`, 'error');
+      showToast(`${data.assetId} ติดตั้งเสร็จแล้ว`, 'gray');
       return;
     }
 
@@ -1240,7 +1241,7 @@ function lookupBoxNumber() {
 
   const available = matches.filter(a => a.status !== 'completed');
   if (available.length === 0) {
-    showToast(`กล่อง ${wanted} ติดตั้งเสร็จแล้ว`, 'error');
+    showToast(`กล่อง ${wanted} ติดตั้งเสร็จแล้ว`, 'gray');
     return;
   }
 
