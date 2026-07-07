@@ -159,6 +159,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text)}
 .asset-badge.blue{background:rgba(74,144,217,0.2);color:var(--accent)}
 .asset-badge.green{background:rgba(46,125,64,0.25);color:#5DBF72}
 .asset-box{font-size:1.35rem;font-weight:700;color:var(--text);line-height:1.2;margin-bottom:3px}
+.asset-sn{font-size:0.82rem;color:var(--text);margin-bottom:2px}
 .asset-site{font-size:0.82rem;color:var(--text2)}
 .asset-id-small{font-size:0.72rem;color:var(--text3);margin-top:2px}
 
@@ -173,24 +174,23 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text)}
 }
 .checklist-items{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
 .checklist-item{
-  display:flex;align-items:center;gap:12px;
-  background:var(--surface);border-radius:10px;padding:13px 14px;
-  cursor:pointer;border:1px solid var(--border);
+  display:flex;align-items:center;gap:14px;
+  background:rgba(255,255,255,0.03);border-radius:12px;padding:14px;
+  cursor:pointer;border:0.5px solid rgba(255,255,255,0.06);
   transition:background 0.12s,border-color 0.12s;user-select:none;
 }
-.checklist-item.checked{background:rgba(46,125,64,0.1);border-color:rgba(46,125,64,0.4)}
+.checklist-item.checked{background:rgba(46,125,50,0.12);border-color:rgba(76,175,80,0.2)}
 .check-box{
-  width:22px;height:22px;border-radius:50%;border:2px solid var(--text3);
+  width:28px;height:28px;border-radius:8px;
+  border:2px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.04);
   display:flex;align-items:center;justify-content:center;flex-shrink:0;
   transition:background 0.12s,border-color 0.12s;
 }
-.checklist-item.checked .check-box{background:var(--green);border-color:var(--green)}
-.check-mark{color:#fff;font-size:0.72rem;font-weight:700;display:none}
+.checklist-item.checked .check-box{background:#2E7D32;border-color:#4CAF50}
+.check-mark{color:#fff;font-size:18px;font-weight:700;display:none;line-height:1}
 .checklist-item.checked .check-mark{display:block}
-.check-num{font-size:0.68rem;font-weight:700;color:var(--text3)}
-.checklist-item.checked .check-num{display:none}
-.check-label{font-size:0.88rem;color:var(--text);flex:1;line-height:1.4}
-.checklist-item.checked .check-label{color:rgba(240,244,248,0.6)}
+.check-label{font-size:0.88rem;color:#6B7D8E;flex:1;line-height:1.4}
+.checklist-item.checked .check-label{color:#fff}
 
 .no-qc-notice{
   background:var(--surface);border-radius:var(--radius);padding:20px;
@@ -212,7 +212,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text)}
   color:#fff;box-shadow:0 4px 16px rgba(46,125,64,0.3);
 }
 .btn-pass-qc.disabled{
-  background:var(--surface2);color:var(--text3);cursor:not-allowed;
+  background:rgba(255,255,255,0.06);color:#3A4D5C;cursor:not-allowed;
 }
 
 /* ====== TOAST ====== */
@@ -605,18 +605,21 @@ function buildChecklistScreen(data) {
         ${currentItems.map((item, i) => `
           <div class="checklist-item" id="ci-${item.key}" onclick="toggleCheck('${item.key}')">
             <div class="check-box">
-              <span class="check-num">${i + 1}</span>
               <span class="check-mark">✓</span>
             </div>
-            <span class="check-label">${item.label}</span>
+            <span class="check-label">${i + 1}. ${item.label}</span>
           </div>`).join('')}
       </div>`;
   }
+
+  const snVal = data.serialNumbers?.pc || '';
+  const snHtml = snVal ? `<div class="asset-sn">${snVal}</div>` : '';
 
   document.getElementById('checklist-body').innerHTML = `
     <div class="asset-card ${cardCls}">
       <div class="asset-badge ${badgeCls}">${DEVICE_LABEL[type] || type}</div>
       <div class="asset-box">กล่อง ${data.boxNumber || '—'}</div>
+      ${snHtml}
       <div class="asset-site">${site}</div>
       <div class="asset-id-small">${data.assetId || ''}</div>
     </div>
@@ -647,7 +650,7 @@ function updateQCButton() {
   const allDone = count === total;
   btn.className   = allDone ? 'btn-pass-qc enabled' : 'btn-pass-qc disabled';
   btn.disabled    = !allDone;
-  btn.textContent = allDone ? '✓ ผ่าน QC' : `ผ่าน QC — ติ๊กให้ครบก่อน (${count}/${total})`;
+  btn.textContent = allDone ? '✓ ผ่าน QC' : `ติ๊กให้ครบก่อน (${count}/${total})`;
 }
 
 document.getElementById('btn-back').addEventListener('click', () => {
