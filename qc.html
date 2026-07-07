@@ -226,6 +226,25 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text)}
 .toast.success{background:var(--green)}
 .toast.error{background:var(--red)}
 .toast.gray{background:#546E7A}
+
+/* ====== QC-DONE POPUP ====== */
+#qcdone-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);
+  align-items:flex-end;justify-content:center;z-index:1100;
+}
+#qcdone-overlay.show{display:flex}
+#qcdone-sheet{
+  background:#1A1200;border:1.5px solid #F59E0B;
+  border-radius:20px 20px 0 0;padding:28px 24px 36px;
+  width:100%;max-width:480px;box-sizing:border-box;
+}
+.qcdone-icon{font-size:2rem;margin-bottom:8px}
+.qcdone-title{color:#FCD34D;font-size:1.05rem;font-weight:700;margin-bottom:4px}
+.qcdone-msg{color:#FDE68A;font-size:0.88rem;line-height:1.5;margin-bottom:20px}
+#qcdone-ok{
+  width:100%;padding:14px;background:#F59E0B;color:#000;
+  font-size:1rem;font-weight:700;border:none;border-radius:12px;cursor:pointer;
+}
 </style>
 </head>
 <body>
@@ -325,6 +344,16 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text)}
   <div class="checklist-body" id="checklist-body"></div>
   <div class="checklist-bottom">
     <button class="btn-pass-qc disabled" id="btn-pass-qc" disabled>ผ่าน QC — ติ๊กให้ครบก่อน (0/7)</button>
+  </div>
+</div>
+
+<!-- QC-DONE POPUP -->
+<div id="qcdone-overlay">
+  <div id="qcdone-sheet">
+    <div class="qcdone-icon">⚠️</div>
+    <div class="qcdone-title">QC แล้ว</div>
+    <div class="qcdone-msg" id="qcdone-msg"></div>
+    <button id="qcdone-ok">ตกลง</button>
   </div>
 </div>
 
@@ -531,6 +560,10 @@ async function lookupSN(sn) {
       return;
     }
     pendingDoc = { docId: snap.docs[0].id, ...snap.docs[0].data() };
+    if (pendingDoc.qc && pendingDoc.qc.checkedAt) {
+      showQCDonePopup(pendingDoc);
+      return;
+    }
     buildChecklistScreen(pendingDoc);
   } catch (err) {
     console.error(err);
@@ -664,6 +697,20 @@ function showToast(msg, type = '') {
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
 }
+
+function showQCDonePopup(data) {
+  const ts  = data.qc.checkedAt?.toDate ? data.qc.checkedAt.toDate() : new Date();
+  const day = ts.toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'2-digit' });
+  const time = ts.toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' });
+  document.getElementById('qcdone-msg').textContent =
+    `${data.assetId}  ตรวจโดย ${data.qc.checkedBy} เมื่อ ${day} ${time}`;
+  document.getElementById('qcdone-overlay').classList.add('show');
+}
+
+document.getElementById('qcdone-ok').addEventListener('click', () => {
+  document.getElementById('qcdone-overlay').classList.remove('show');
+  openScanner();
+});
 </script>
 </body>
 </html>
