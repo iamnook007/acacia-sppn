@@ -55,35 +55,30 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text)}
 .btn-google:active{transform:scale(0.97)}
 
 /* ====== HOME ====== */
-.status-bar{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:10px 20px 2px;flex-shrink:0;
-}
-.status-time{font-size:0.88rem;font-weight:700;color:var(--text)}
-.status-right{display:flex;align-items:center;gap:5px;font-size:0.78rem;color:var(--text2)}
+.status-bar{display:none}
 
 .app-header{
   display:flex;align-items:center;gap:10px;
   padding:8px 20px 10px;flex-shrink:0;
 }
 .ac-logo{
-  width:34px;height:34px;border-radius:50%;flex-shrink:0;
+  width:42px;height:42px;border-radius:50%;flex-shrink:0;
   background:linear-gradient(135deg,var(--accent-dark),var(--accent));
   display:flex;align-items:center;justify-content:center;
-  font-size:0.7rem;font-weight:700;color:#fff;letter-spacing:0.5px;
+  font-size:0.78rem;font-weight:700;color:#fff;letter-spacing:0.5px;
 }
 .app-info{flex:1}
-.app-company{font-size:0.82rem;font-weight:700;color:var(--text);line-height:1.2}
-.app-subtitle{font-size:0.7rem;color:var(--text2)}
+.app-company{font-size:0.94rem;font-weight:700;color:var(--text);line-height:1.2}
+.app-subtitle{font-size:0.75rem;color:var(--text2)}
 .home-avatar{
-  width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0;
+  width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;
   border:2px solid rgba(255,255,255,0.12);cursor:pointer;
 }
 .home-initials{
-  width:34px;height:34px;border-radius:50%;flex-shrink:0;
+  width:36px;height:36px;border-radius:50%;flex-shrink:0;
   background:var(--surface2);border:2px solid rgba(255,255,255,0.12);
   display:flex;align-items:center;justify-content:center;
-  font-size:0.72rem;font-weight:700;color:var(--text2);cursor:pointer;
+  font-size:0.75rem;font-weight:700;color:var(--text2);cursor:pointer;
 }
 
 .progress-section{
@@ -104,10 +99,11 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text)}
   cursor:pointer;user-select:none;gap:14px;padding:20px;
 }
 .scan-circle{
-  width:140px;height:140px;border-radius:50%;
-  background:linear-gradient(135deg,var(--accent-dark) 0%,var(--accent) 100%);
+  width:200px;height:200px;border-radius:32px;
+  background:linear-gradient(145deg,#1B4F8A,#0D3060);
+  border:1.5px solid rgba(74,144,217,0.2);
   display:flex;align-items:center;justify-content:center;
-  box-shadow:0 8px 32px rgba(74,144,217,0.3),0 0 0 12px rgba(74,144,217,0.07),0 0 0 24px rgba(74,144,217,0.03);
+  box-shadow:0 8px 32px rgba(13,48,96,0.5),0 0 0 10px rgba(74,144,217,0.05);
   transition:transform 0.15s;
 }
 .scan-hero:active .scan-circle{transform:scale(0.95)}
@@ -287,7 +283,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text)}
 
   <div class="scan-hero" id="btn-home-scan">
     <div class="scan-circle">
-      <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+      <svg width="72" height="72" viewBox="0 0 56 56" fill="none">
         <rect x="4" y="4" width="20" height="20" rx="3" stroke="white" stroke-width="2.5" fill="none"/>
         <rect x="8" y="8" width="12" height="12" rx="1.5" fill="white"/>
         <rect x="32" y="4" width="20" height="20" rx="3" stroke="white" stroke-width="2.5" fill="none"/>
