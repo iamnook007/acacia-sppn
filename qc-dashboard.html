@@ -45,18 +45,19 @@ body{font-family:'Sarabun',sans-serif;background:var(--gray-100);color:var(--gra
 .bk-label{font-size:0.72rem;color:var(--gray-400);font-weight:700;text-transform:uppercase;letter-spacing:0.04em}
 .bk-val{font-size:1.1rem;font-weight:700;margin-top:4px}
 .bk-val.pc1{color:var(--blue)}
-.bk-val.pc2{color:var(--blue-dark,#143D6B)}
+.bk-val.pc2{color:#5B21B6}
 .bk-val.nb{color:var(--green)}
 .bk-sub{font-size:0.72rem;color:var(--gray-400);margin-top:1px}
 
 /* FILTER BAR */
 .filter-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
-.filter-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:130px}
+.filter-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px}
 .filter-group label{font-size:0.78rem;font-weight:600;color:var(--gray-600)}
 .filter-group input,.filter-group select{
   padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:8px;
   font-family:inherit;font-size:0.9rem;color:var(--gray-800);background:#fff;
 }
+.filter-sep{align-self:flex-end;padding-bottom:9px;color:var(--gray-400);font-weight:600;font-size:0.85rem}
 .btn-refresh{
   background:var(--blue);color:#fff;border:none;border-radius:8px;
   padding:9px 18px;font-family:inherit;font-size:0.9rem;font-weight:600;cursor:pointer;
@@ -64,19 +65,22 @@ body{font-family:'Sarabun',sans-serif;background:var(--gray-100);color:var(--gra
 }
 .btn-refresh:hover{background:var(--blue-dark)}
 
-/* STAFF TABLE */
+/* TABLES */
 .tbl-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
 th{background:var(--gray-50);padding:10px 12px;text-align:left;font-size:0.75rem;font-weight:700;
    color:var(--gray-600);text-transform:uppercase;letter-spacing:0.03em;border-bottom:2px solid var(--gray-200)}
 td{padding:10px 12px;border-bottom:1px solid var(--gray-100);font-size:0.88rem}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:var(--gray-50)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--gray-50)}
+tfoot td{border-top:2px solid var(--gray-200);background:var(--blue-light);font-weight:700}
 .rank{font-size:0.78rem;color:var(--gray-400);font-weight:700}
 .staff-name{font-weight:700;color:var(--gray-800)}
 .num{font-weight:700;color:var(--blue);text-align:right}
-.num.today{color:var(--green)}
+.num.pc2{color:#5B21B6}
+.num.nb{color:var(--green)}
 .num.avg{color:var(--amber)}
+.num.total-col{color:var(--blue)}
 
 /* QC LIST */
 .qc-item{
@@ -84,7 +88,7 @@ tr:hover td{background:var(--gray-50)}
   padding:11px 0;border-bottom:1px solid var(--gray-100);
 }
 .qc-item:last-child{border-bottom:none}
-.qc-time{font-size:0.78rem;font-weight:700;color:var(--gray-400);min-width:42px;padding-top:2px}
+.qc-time{font-size:0.78rem;font-weight:700;color:var(--gray-400);min-width:48px;padding-top:2px;line-height:1.4}
 .qc-body{flex:1;min-width:0}
 .qc-asset{font-size:0.95rem;font-weight:700;color:var(--blue)}
 .qc-detail{font-size:0.8rem;color:var(--gray-600);margin-top:2px}
@@ -95,19 +99,17 @@ tr:hover td{background:var(--gray-50)}
 .badge-pc2{background:#EDE9FE;color:#5B21B6}
 .badge-nb{background:var(--green-light);color:var(--green)}
 
-/* LOADING / ERROR */
+/* MISC */
 .loading{text-align:center;padding:40px;color:var(--gray-400)}
 .error-box{background:#FEE2E2;color:#991B1B;border-radius:10px;padding:14px 16px;font-size:0.88rem;line-height:1.6}
 .empty{text-align:center;padding:28px;color:var(--gray-400);font-size:0.9rem}
-
-/* COUNT BADGE */
 .list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .list-count{font-size:0.8rem;color:var(--gray-400);font-weight:600}
 
 @media(max-width:480px){
-  .breakdown{grid-template-columns:repeat(3,1fr)}
   .bk-val{font-size:0.95rem}
   th,td{padding:8px 8px}
+  .filter-sep{display:none}
 }
 </style>
 </head>
@@ -131,8 +133,13 @@ tr:hover td{background:var(--gray-50)}
     <div class="section-title">กรองข้อมูล</div>
     <div class="filter-bar">
       <div class="filter-group">
-        <label for="filter-date">วันที่</label>
-        <input type="date" id="filter-date"/>
+        <label for="filter-date-from">วันเริ่มต้น</label>
+        <input type="date" id="filter-date-from"/>
+      </div>
+      <div class="filter-sep">—</div>
+      <div class="filter-group">
+        <label for="filter-date-to">วันสิ้นสุด</label>
+        <input type="date" id="filter-date-to"/>
       </div>
       <div class="filter-group">
         <label for="filter-staff">เจ้าหน้าที่</label>
@@ -144,9 +151,9 @@ tr:hover td{background:var(--gray-50)}
     </div>
   </div>
 
-  <!-- ส่วนที่ 3: ประสิทธิภาพเจ้าหน้าที่ -->
+  <!-- ส่วนที่ 3: สรุปผล QC -->
   <div class="card">
-    <div class="section-title">สรุปประสิทธิภาพเจ้าหน้าที่</div>
+    <div class="section-title">สรุปผล QC</div>
     <div id="staff-table"><div class="loading">กำลังโหลด...</div></div>
   </div>
 
@@ -172,7 +179,7 @@ const FIREBASE_CONFIG = {
 };
 const RECAPTCHA_SITE_KEY = '6LeCPyYtAAAAAPPwl0IisCVWN8l3GpJOfHL-_OEO';
 
-const TOTALS = { PC1: 381, PC2: 3, Notebook: 77, total: 461 };
+const TOTALS       = { PC1: 381, PC2: 3, Notebook: 77, total: 461 };
 const DEVICE_LABEL = { PC1: 'PC1', PC2: 'PC2', Notebook: 'NB' };
 const BADGE_CLASS  = { PC1: 'badge-pc1', PC2: 'badge-pc2', Notebook: 'badge-nb' };
 
@@ -183,10 +190,11 @@ const db = firebase.firestore();
 // ============================================================
 // STATE
 // ============================================================
-let allDocs   = [];  // PC1+PC2+Notebook (up to 461)
-let qcDocs    = [];  // subset with qc.checkedBy set
-let filterDate  = todayStr();
-let filterStaff = '';
+let allDocs       = [];
+let qcDocs        = [];
+let filterDateFrom = todayStr();
+let filterDateTo   = todayStr();
+let filterStaff    = '';
 
 // ============================================================
 // HELPERS
@@ -202,23 +210,44 @@ function dateOf(ts) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-function fmtTime(ts) {
+function fmtQCTime(ts) {
   if (!ts) return '—';
-  const d = ts.toDate ? ts.toDate() : new Date(ts);
-  return d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+  const d    = ts.toDate ? ts.toDate() : new Date(ts);
+  const time = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+  if (filterDateFrom === filterDateTo) return time;
+  return `<span style="font-size:0.7rem;display:block">${d.getDate()}/${d.getMonth()+1}</span>${time}`;
 }
 
 function pct(n, total) {
   return total > 0 ? ((n / total) * 100).toFixed(1) : '0.0';
 }
 
+function inRange(ts) {
+  const d = dateOf(ts);
+  return d >= filterDateFrom && d <= filterDateTo;
+}
+
 // ============================================================
 // INIT
 // ============================================================
-document.getElementById('filter-date').value = filterDate;
+document.getElementById('filter-date-from').value = filterDateFrom;
+document.getElementById('filter-date-to').value   = filterDateTo;
 
-document.getElementById('filter-date').addEventListener('change', e => {
-  filterDate = e.target.value;
+document.getElementById('filter-date-from').addEventListener('change', e => {
+  filterDateFrom = e.target.value;
+  if (filterDateFrom > filterDateTo) {
+    filterDateTo = filterDateFrom;
+    document.getElementById('filter-date-to').value = filterDateTo;
+  }
+  renderAll();
+});
+
+document.getElementById('filter-date-to').addEventListener('change', e => {
+  filterDateTo = e.target.value;
+  if (filterDateTo < filterDateFrom) {
+    filterDateFrom = filterDateTo;
+    document.getElementById('filter-date-from').value = filterDateFrom;
+  }
   renderAll();
 });
 
@@ -238,11 +267,7 @@ async function loadData() {
   document.getElementById('staff-table').innerHTML = '<div class="loading">กำลังโหลด...</div>';
   document.getElementById('qc-list').innerHTML     = '<div class="loading">กำลังโหลด...</div>';
 
-  try {
-    await firebase.auth().signInAnonymously();
-  } catch (e) {
-    console.warn('auth', e);
-  }
+  try { await firebase.auth().signInAnonymously(); } catch (e) { console.warn('auth', e); }
 
   try {
     const snap = await db.collection('installations')
@@ -251,9 +276,8 @@ async function loadData() {
     allDocs = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
     qcDocs  = allDocs.filter(d => d.qc?.checkedBy);
 
-    const now = new Date();
     document.getElementById('last-loaded').textContent =
-      now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
     populateStaffDropdown();
     renderAll();
@@ -264,8 +288,7 @@ async function loadData() {
         <strong>โหลดข้อมูลไม่สำเร็จ</strong><br/>
         ${err.message}<br/><br/>
         ถ้า error เกี่ยวกับ index ให้เปิด Firebase Console → Firestore → Indexes
-        แล้วสร้าง composite index: <code>deviceType ASC</code>
-        หรือคลิก link ใน browser console
+        แล้วสร้าง composite index หรือคลิก link ใน browser console
       </div>`;
     document.getElementById('overview-card').innerHTML =
       '<div class="section-title">ภาพรวมทั้งโครงการ</div>' + errHtml;
@@ -296,7 +319,7 @@ function renderAll() {
 }
 
 // ============================================================
-// OVERVIEW
+// OVERVIEW (all-time totals, no date filter)
 // ============================================================
 function renderOverview() {
   const qcPC1 = qcDocs.filter(d => d.deviceType === 'PC1').length;
@@ -321,23 +344,23 @@ function renderOverview() {
       <div class="bk-cell">
         <div class="bk-label">PC1</div>
         <div class="bk-val pc1">${qcPC1} / ${TOTALS.PC1}</div>
-        <div class="bk-sub">${pct(qcPC1,TOTALS.PC1)}%</div>
+        <div class="bk-sub">${pct(qcPC1, TOTALS.PC1)}%</div>
       </div>
       <div class="bk-cell">
         <div class="bk-label">PC2</div>
         <div class="bk-val pc2">${qcPC2} / ${TOTALS.PC2}</div>
-        <div class="bk-sub">${pct(qcPC2,TOTALS.PC2)}%</div>
+        <div class="bk-sub">${pct(qcPC2, TOTALS.PC2)}%</div>
       </div>
       <div class="bk-cell">
         <div class="bk-label">Notebook</div>
         <div class="bk-val nb">${qcNB} / ${TOTALS.Notebook}</div>
-        <div class="bk-sub">${pct(qcNB,TOTALS.Notebook)}%</div>
+        <div class="bk-sub">${pct(qcNB, TOTALS.Notebook)}%</div>
       </div>
     </div>`;
 }
 
 // ============================================================
-// STAFF TABLE
+// SUMMARY TABLE (filter: date range + staff)
 // ============================================================
 function renderStaffTable() {
   if (qcDocs.length === 0) {
@@ -345,27 +368,48 @@ function renderStaffTable() {
     return;
   }
 
+  const ranged = qcDocs.filter(d =>
+    inRange(d.qc.checkedAt) && (!filterStaff || d.qc.checkedBy === filterStaff)
+  );
+
+  if (ranged.length === 0) {
+    document.getElementById('staff-table').innerHTML = '<div class="empty">ไม่มีรายการที่ตรงกับเงื่อนไข</div>';
+    return;
+  }
+
   const staffMap = {};
-  for (const doc of qcDocs) {
+  for (const doc of ranged) {
     const name = doc.qc.checkedBy;
-    if (!staffMap[name]) staffMap[name] = { total: 0, selectedDate: 0, days: new Set() };
-    staffMap[name].total++;
+    if (!staffMap[name]) staffMap[name] = { pc1: 0, pc2: 0, nb: 0, days: new Set() };
+    if (doc.deviceType === 'PC1')      staffMap[name].pc1++;
+    else if (doc.deviceType === 'PC2') staffMap[name].pc2++;
+    else if (doc.deviceType === 'Notebook') staffMap[name].nb++;
     const d = dateOf(doc.qc.checkedAt);
-    if (d === filterDate) staffMap[name].selectedDate++;
     if (d) staffMap[name].days.add(d);
   }
 
   const rows = Object.entries(staffMap)
-    .map(([name, s]) => ({
-      name,
-      total:        s.total,
-      selectedDate: s.selectedDate,
-      avgPerDay:    s.days.size > 0 ? (s.total / s.days.size).toFixed(1) : '—',
-    }))
+    .map(([name, s]) => {
+      const total = s.pc1 + s.pc2 + s.nb;
+      return {
+        name,
+        pc1: s.pc1,
+        pc2: s.pc2,
+        nb:  s.nb,
+        total,
+        avgPerDay: s.days.size > 0 ? (total / s.days.size).toFixed(1) : '—',
+      };
+    })
     .sort((a, b) => b.total - a.total);
 
-  const dateTh = new Date(filterDate + 'T00:00:00')
-    .toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+  const sumPC1 = rows.reduce((s, r) => s + r.pc1, 0);
+  const sumPC2 = rows.reduce((s, r) => s + r.pc2, 0);
+  const sumNB  = rows.reduce((s, r) => s + r.nb, 0);
+  const sumAll = sumPC1 + sumPC2 + sumNB;
+  const allDays = new Set(ranged.map(d => dateOf(d.qc.checkedAt)).filter(Boolean));
+  const avgAll  = allDays.size > 0 ? (sumAll / allDays.size).toFixed(1) : '—';
+
+  const dash = v => v || '<span style="color:var(--gray-400)">—</span>';
 
   document.getElementById('staff-table').innerHTML = `
     <div class="tbl-wrap">
@@ -374,8 +418,10 @@ function renderStaffTable() {
           <tr>
             <th>#</th>
             <th>ชื่อเจ้าหน้าที่</th>
-            <th style="text-align:right">รวมทั้งโครงการ</th>
-            <th style="text-align:right">${dateTh}</th>
+            <th style="text-align:right">PC1</th>
+            <th style="text-align:right">PC2</th>
+            <th style="text-align:right">NB</th>
+            <th style="text-align:right">รวม</th>
             <th style="text-align:right">เฉลี่ย/วัน</th>
           </tr>
         </thead>
@@ -384,25 +430,36 @@ function renderStaffTable() {
             <tr>
               <td class="rank">${i + 1}</td>
               <td class="staff-name">${r.name}</td>
-              <td class="num">${r.total}</td>
-              <td class="num today">${r.selectedDate || '—'}</td>
+              <td class="num">${dash(r.pc1)}</td>
+              <td class="num pc2">${dash(r.pc2)}</td>
+              <td class="num nb">${dash(r.nb)}</td>
+              <td class="num total-col">${r.total}</td>
               <td class="num avg">${r.avgPerDay}</td>
             </tr>`).join('')}
         </tbody>
+        <tfoot>
+          <tr>
+            <td></td>
+            <td style="color:var(--blue)">รวมทีม</td>
+            <td class="num">${dash(sumPC1)}</td>
+            <td class="num pc2">${dash(sumPC2)}</td>
+            <td class="num nb">${dash(sumNB)}</td>
+            <td class="num total-col">${sumAll}</td>
+            <td class="num avg">${avgAll}</td>
+          </tr>
+        </tfoot>
       </table>
     </div>`;
 }
 
 // ============================================================
-// QC LIST
+// QC LIST (filter: date range + staff)
 // ============================================================
 function renderQCList() {
   const filtered = qcDocs
-    .filter(d => {
-      const dateMatch  = dateOf(d.qc.checkedAt) === filterDate;
-      const staffMatch = !filterStaff || d.qc.checkedBy === filterStaff;
-      return dateMatch && staffMatch;
-    })
+    .filter(d =>
+      inRange(d.qc.checkedAt) && (!filterStaff || d.qc.checkedBy === filterStaff)
+    )
     .sort((a, b) => {
       const ta = a.qc.checkedAt?.toMillis?.() ?? 0;
       const tb = b.qc.checkedAt?.toMillis?.() ?? 0;
@@ -411,9 +468,7 @@ function renderQCList() {
 
   const shown = filtered.slice(0, 100);
   document.getElementById('list-count').textContent =
-    filtered.length > 100
-      ? `แสดง 100 / ${filtered.length} รายการ`
-      : `${filtered.length} รายการ`;
+    filtered.length > 100 ? `แสดง 100 / ${filtered.length} รายการ` : `${filtered.length} รายการ`;
 
   if (shown.length === 0) {
     document.getElementById('qc-list').innerHTML = '<div class="empty">ไม่มีรายการที่ตรงกับเงื่อนไข</div>';
@@ -426,11 +481,9 @@ function renderQCList() {
     const devLbl = DEVICE_LABEL[d.deviceType] || d.deviceType;
     return `
       <div class="qc-item">
-        <div class="qc-time">${fmtTime(d.qc.checkedAt)}</div>
+        <div class="qc-time">${fmtQCTime(d.qc.checkedAt)}</div>
         <div class="qc-body">
-          <div class="qc-asset">
-            <span class="badge ${badge}">${devLbl}</span>${d.assetId || '—'}
-          </div>
+          <div class="qc-asset"><span class="badge ${badge}">${devLbl}</span>${d.assetId || '—'}</div>
           <div class="qc-detail">กล่อง ${d.boxNumber || '—'}</div>
           <div class="qc-site">${site}</div>
         </div>
