@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>QC ตรวจรับครุภัณฑ์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root {
+  --blue:#1B4F8A; --blue-dark:#143D6B; --blue-light:#EBF2FB;
+  --green:#1A7A4A; --green-light:#E8F5EE;
+  --amber:#D97706;
+  --red:#DC2626;
+  --gray-50:#F8FAFC; --gray-100:#F1F5F9; --gray-200:#E2E8F0;
+  --gray-400:#94A3B8; --gray-600:#475569; --gray-800:#1E293B;
+  --radius:12px; --shadow:0 2px 12px rgba(0,0,0,0.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--gray-100);color:var(--gray-800);min-height:100vh}
+
+/* SCREENS */
+.screen{display:none}
+.screen.active{display:block}
+
+/* LOGIN */
+.login-wrap{
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:32px 24px;
+  background:linear-gradient(160deg,var(--blue) 0%,var(--blue-dark) 100%);
+}
+.login-logo{
+  width:84px;height:84px;background:rgba(255,255,255,0.15);
+  border-radius:20px;display:flex;align-items:center;justify-content:center;
+  font-size:2.8rem;margin-bottom:20px;
+}
+.login-title{color:#fff;font-size:1.7rem;font-weight:700;text-align:center;margin-bottom:6px}
+.login-sub{color:rgba(255,255,255,0.75);font-size:0.9rem;text-align:center;margin-bottom:44px}
+.btn-google{
+  display:flex;align-items:center;gap:12px;
+  background:#fff;color:#1a1a1a;border:none;border-radius:12px;
+  padding:14px 28px;font-family:inherit;font-size:1rem;font-weight:700;
+  cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.2);
+  transition:transform 0.1s,box-shadow 0.1s;
+}
+.btn-google:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,0.25)}
+.btn-google:active{transform:translateY(0)}
+
+/* HEADER */
+.header{
+  background:var(--blue);color:#fff;padding:12px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:50;
+}
+.header-title{font-size:1rem;font-weight:700}
+.header-right{display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,0.4);object-fit:cover}
+.user-name{font-size:0.82rem;opacity:0.9;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-logout{
+  background:rgba(255,255,255,0.15);color:#fff;
+  border:1px solid rgba(255,255,255,0.3);border-radius:8px;
+  padding:5px 12px;font-family:inherit;font-size:0.8rem;cursor:pointer;
+}
+
+/* MAIN */
+.main-content{padding:16px;max-width:480px;margin:0 auto}
+.date-card{
+  background:#fff;border-radius:var(--radius);padding:14px 16px;
+  box-shadow:var(--shadow);margin-bottom:16px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.date-label{font-size:0.78rem;color:var(--gray-400);font-weight:600}
+.date-val{font-size:0.95rem;font-weight:700;color:var(--blue)}
+
+/* SCAN */
+.scan-card{
+  background:#fff;border-radius:var(--radius);padding:16px;
+  box-shadow:var(--shadow);margin-bottom:16px;text-align:center;
+}
+.btn-scan{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;background:var(--blue);color:#fff;
+  border:none;border-radius:12px;padding:18px;
+  font-family:inherit;font-size:1.1rem;font-weight:700;cursor:pointer;
+  transition:background 0.15s;
+}
+.btn-scan:hover{background:var(--blue-dark)}
+.btn-scan.active{background:#B91C1C}
+#qr-reader{width:100%;max-width:320px;margin:16px auto 0;border-radius:12px;overflow:hidden;display:none}
+#qr-reader.show{display:block}
+#qr-reader video{width:100% !important;border-radius:12px}
+#qr-reader img{display:none !important}
+
+/* STATS */
+.stats-card{
+  background:var(--blue-light);border-radius:var(--radius);
+  padding:14px 16px;box-shadow:var(--shadow);margin-bottom:16px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.stats-label{font-size:0.85rem;color:var(--blue);font-weight:600}
+.stats-count{font-size:1.5rem;font-weight:700;color:var(--blue)}
+.stats-total{font-size:0.85rem;color:var(--blue)}
+
+/* HISTORY */
+.history-header{
+  font-size:0.78rem;font-weight:700;color:var(--gray-600);
+  text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;
+}
+.history-item{
+  background:#fff;border-radius:10px;padding:12px 14px;
+  box-shadow:var(--shadow);margin-bottom:8px;
+  display:flex;align-items:flex-start;justify-content:space-between;gap:8px;
+}
+.history-asset-id{font-size:0.95rem;font-weight:700;color:var(--blue)}
+.history-device{font-size:0.8rem;color:var(--gray-600);margin-top:1px}
+.history-site{font-size:0.78rem;color:var(--gray-400);margin-top:2px}
+.history-right{text-align:right;flex-shrink:0}
+.history-time{font-size:0.82rem;font-weight:700;color:var(--gray-800)}
+.history-by{font-size:0.75rem;color:var(--gray-400);margin-top:1px}
+.qc-badge{
+  display:inline-block;background:var(--green-light);color:var(--green);
+  font-size:0.72rem;font-weight:700;padding:2px 8px;border-radius:20px;margin-top:4px;
+}
+.empty-history{text-align:center;color:var(--gray-400);padding:28px;font-size:0.9rem}
+
+/* MODAL */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.5);
+  display:none;align-items:flex-end;justify-content:center;
+  z-index:200;padding:16px;
+}
+.modal-overlay.show{display:flex}
+.modal-sheet{
+  background:#fff;border-radius:20px 20px 16px 16px;
+  width:100%;max-width:480px;padding:8px 20px 24px;
+  animation:slideUp 0.22s ease;
+}
+@keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-handle{
+  width:40px;height:4px;background:var(--gray-200);
+  border-radius:2px;margin:12px auto 20px;
+}
+.modal-asset-id{font-size:1.5rem;font-weight:700;color:var(--blue);margin-bottom:4px}
+.modal-device-badge{
+  display:inline-block;background:var(--blue-light);color:var(--blue);
+  font-size:0.8rem;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:16px;
+}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.modal-cell{background:var(--gray-50);border-radius:8px;padding:10px 12px}
+.modal-cell.full{grid-column:1/-1}
+.modal-cell-label{font-size:0.7rem;color:var(--gray-400);font-weight:700;text-transform:uppercase;letter-spacing:0.04em}
+.modal-cell-val{font-size:0.92rem;font-weight:700;margin-top:3px;color:var(--gray-800)}
+.status-pending{color:var(--amber)}
+.status-completed{color:var(--green)}
+.modal-qc-done{
+  background:var(--green-light);border-radius:8px;padding:10px 14px;
+  font-size:0.85rem;color:var(--green);margin-bottom:14px;display:none;
+}
+.modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.btn-confirm{
+  background:var(--green);color:#fff;border:none;border-radius:12px;
+  padding:14px;font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;
+}
+.btn-confirm:disabled{opacity:0.5;cursor:not-allowed}
+.btn-cancel-modal{
+  background:var(--gray-100);color:var(--gray-600);border:none;border-radius:12px;
+  padding:14px;font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;
+}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--gray-800);color:#fff;padding:11px 20px;border-radius:10px;
+  font-size:0.92rem;font-weight:600;white-space:nowrap;
+  opacity:0;transition:opacity 0.2s;pointer-events:none;z-index:999;
+}
+.toast.show{opacity:1}
+.toast.success{background:var(--green)}
+.toast.error{background:var(--red)}
+.toast.gray{background:#546E7A}
+</style>
+</head>
+<body>
+
+<!-- SCREEN: LOGIN -->
+<div id="screen-login" class="screen active">
+  <div class="login-wrap">
+    <div class="login-logo">📦</div>
+    <h1 class="login-title">QC ตรวจรับครุภัณฑ์</h1>
+    <p class="login-sub">สำนักงานปลัดกระทรวงพลังงาน (สป.พน.)</p>
+    <button id="btn-google-login" class="btn-google">
+      <svg width="22" height="22" viewBox="0 0 48 48">
+        <path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 32.4 29.3 35 24 35c-6.1 0-11-4.9-11-11s4.9-11 11-11c2.8 0 5.3 1 7.2 2.7l5.7-5.7C33.5 7.1 29 5 24 5 12.9 5 4 13.9 4 25s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-4z"/>
+        <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 16 19 13 24 13c2.8 0 5.3 1 7.2 2.7l5.7-5.7C33.5 7.1 29 5 24 5 16.3 5 9.7 9 6.3 14.7z"/>
+        <path fill="#4CAF50" d="M24 45c4.9 0 9.4-1.8 12.8-4.8l-6.3-5.2c-1.8 1.2-4 1.9-6.5 1.9-5.2 0-9.6-3.5-11.2-8.2l-6.5 5C9.5 40.8 16.3 45 24 45z"/>
+        <path fill="#1976D2" d="M43.6 20H24v8h11.3c-.9 2.4-2.5 4.4-4.6 5.8l6.3 5.2C40.6 35.8 44 31.3 44 25c0-1.3-.1-2.7-.4-4z"/>
+      </svg>
+      เข้าสู่ระบบด้วย Google
+    </button>
+  </div>
+</div>
+
+<!-- SCREEN: MAIN -->
+<div id="screen-main" class="screen">
+  <div class="header">
+    <span class="header-title">QC ตรวจรับครุภัณฑ์</span>
+    <div class="header-right">
+      <img id="user-avatar" class="avatar" src="" alt=""/>
+      <span class="user-name" id="user-name-display"></span>
+      <button class="btn-logout" id="btn-logout">ออก</button>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="date-card">
+      <div>
+        <div class="date-label">วันที่ตรวจ</div>
+        <div class="date-val" id="today-date"></div>
+      </div>
+      <span style="font-size:1.6rem">🗓️</span>
+    </div>
+
+    <div class="scan-card">
+      <button class="btn-scan" id="btn-scan">
+        <span id="btn-scan-icon">📷</span>
+        <span id="btn-scan-text">สแกน QR สติกเกอร์</span>
+      </button>
+      <div id="qr-reader"></div>
+    </div>
+
+    <div class="stats-card">
+      <div class="stats-label">QC แล้ววันนี้</div>
+      <div>
+        <span class="stats-count" id="today-count">0</span>
+        <span class="stats-total"> / 541 รายการ</span>
+      </div>
+    </div>
+
+    <div class="history-header">ประวัติ QC วันนี้</div>
+    <div id="history-list">
+      <div class="empty-history">ยังไม่มีรายการวันนี้</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ASSET POPUP -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div id="modal-asset-id" class="modal-asset-id"></div>
+    <div id="modal-device-badge" class="modal-device-badge"></div>
+    <div class="modal-grid">
+      <div class="modal-cell">
+        <div class="modal-cell-label">กล่องเลขที่</div>
+        <div class="modal-cell-val" id="modal-box"></div>
+      </div>
+      <div class="modal-cell">
+        <div class="modal-cell-label">สถานะ</div>
+        <div class="modal-cell-val" id="modal-status"></div>
+      </div>
+      <div class="modal-cell full">
+        <div class="modal-cell-label">สถานที่</div>
+        <div class="modal-cell-val" id="modal-site"></div>
+      </div>
+    </div>
+    <div id="modal-qc-done" class="modal-qc-done"></div>
+    <div class="modal-actions">
+      <button class="btn-confirm" id="btn-qc-confirm">✓ ผ่าน QC</button>
+      <button class="btn-cancel-modal" id="btn-qc-cancel">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<script>
+const FIREBASE_CONFIG = {
+  apiKey:            'AIzaSyA-F0uH5WcyNpxpUNe7oXDG0_z4vqczW50',
+  authDomain:        'acacia-sppn.firebaseapp.com',
+  projectId:         'acacia-sppn',
+  storageBucket:     'acacia-sppn.firebasestorage.app',
+  messagingSenderId: '846071482521',
+  appId:             '1:846071482521:web:00f846689dec1029d0d008',
+};
+const RECAPTCHA_SITE_KEY = '6LeCPyYtAAAAAPPwl0IisCVWN8l3GpJOfHL-_OEO';
+
+const DEVICE_LABEL = {
+  PC1:'PC แบบที่ 1 + UPS 800VA', PC2:'PC แบบที่ 2',
+  Notebook:'Notebook', Tablet:'Tablet (iPad)', UPS2k:'UPS 2kVA',
+};
+const STATUS_LABEL = { pending:'รอติดตั้ง', uploading:'กำลังทำ', completed:'ติดตั้งเสร็จ' };
+
+firebase.initializeApp(FIREBASE_CONFIG);
+firebase.appCheck().activate(RECAPTCHA_SITE_KEY, true);
+const db   = firebase.firestore();
+const auth = firebase.auth();
+
+// ============================================================
+// STATE
+// ============================================================
+let currentUser   = null;
+let scanner       = null;
+let scannerRunning = false;
+let pendingDoc    = null;
+let toastTimer    = null;
+let todayHistory  = [];
+
+// ============================================================
+// AUTH
+// ============================================================
+auth.onAuthStateChanged(user => {
+  if (user) {
+    currentUser = user;
+    document.getElementById('user-avatar').src = user.photoURL || '';
+    document.getElementById('user-name-display').textContent = user.displayName || user.email;
+    showScreen('main');
+    initMain();
+  } else {
+    currentUser = null;
+    showScreen('login');
+  }
+});
+
+document.getElementById('btn-google-login').addEventListener('click', async () => {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  try {
+    await auth.signInWithPopup(provider);
+  } catch (err) {
+    console.error(err);
+    showToast('เข้าสู่ระบบไม่สำเร็จ', 'error');
+  }
+});
+
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  await stopScanner();
+  await auth.signOut();
+});
+
+// ============================================================
+// SCREENS
+// ============================================================
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(`screen-${name}`).classList.add('active');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function initMain() {
+  const now = new Date();
+  document.getElementById('today-date').textContent =
+    now.toLocaleDateString('th-TH', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  loadTodayHistory();
+}
+
+// ============================================================
+// SCANNER
+// ============================================================
+document.getElementById('btn-scan').addEventListener('click', async () => {
+  if (scannerRunning) { await stopScanner(); } else { await startScanner(); }
+});
+
+async function startScanner() {
+  if (!scanner) scanner = new Html5Qrcode('qr-reader');
+  try {
+    await scanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 240, height: 240 } },
+      onScanSuccess,
+      () => {}
+    );
+    scannerRunning = true;
+    document.getElementById('qr-reader').classList.add('show');
+    document.getElementById('btn-scan').classList.add('active');
+    document.getElementById('btn-scan-icon').textContent = '⏹';
+    document.getElementById('btn-scan-text').textContent = 'หยุดสแกน';
+  } catch (err) {
+    console.error('Camera error:', err);
+    showToast('ไม่สามารถเปิดกล้องได้', 'error');
+  }
+}
+
+async function stopScanner() {
+  if (scanner && scannerRunning) {
+    try { await scanner.stop(); } catch (e) {}
+    scannerRunning = false;
+  }
+  document.getElementById('qr-reader').classList.remove('show');
+  document.getElementById('btn-scan').classList.remove('active');
+  document.getElementById('btn-scan-icon').textContent = '📷';
+  document.getElementById('btn-scan-text').textContent = 'สแกน QR สติกเกอร์';
+}
+
+async function onScanSuccess(sn) {
+  await stopScanner();
+  await lookupSN(sn.trim());
+}
+
+// ============================================================
+// LOOKUP
+// ============================================================
+async function lookupSN(sn) {
+  try {
+    const snap = await db.collection('installations')
+      .where('serialNumbers.pc', '==', sn)
+      .limit(1)
+      .get();
+    if (snap.empty) {
+      showToast('ไม่พบเครื่องนี้ในระบบ', 'error');
+      await startScanner();
+      return;
+    }
+    pendingDoc = { docId: snap.docs[0].id, ...snap.docs[0].data() };
+    showModal(pendingDoc);
+  } catch (err) {
+    console.error(err);
+    showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+    await startScanner();
+  }
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function showModal(data) {
+  const site   = data.location?.siteName || data.location?.office || data.location?.province || '—';
+  const status = STATUS_LABEL[data.status] || data.status || '—';
+  const sCls   = data.status === 'completed' ? 'status-completed' : data.status === 'pending' ? 'status-pending' : '';
+
+  document.getElementById('modal-asset-id').textContent    = data.assetId || '—';
+  document.getElementById('modal-device-badge').textContent = DEVICE_LABEL[data.deviceType] || data.deviceType || '—';
+  document.getElementById('modal-box').textContent         = data.boxNumber || '—';
+  document.getElementById('modal-status').innerHTML        = `<span class="${sCls}">${status}</span>`;
+  document.getElementById('modal-site').textContent        = site;
+
+  const qcEl = document.getElementById('modal-qc-done');
+  if (data.qc?.checkedBy) {
+    const ts    = data.qc.checkedAt?.toDate ? data.qc.checkedAt.toDate() : new Date();
+    const dtStr = ts.toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'numeric' })
+                + ' ' + ts.toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' });
+    qcEl.textContent  = `✓ QC แล้วโดย ${data.qc.checkedBy} เมื่อ ${dtStr}`;
+    qcEl.style.display = 'block';
+  } else {
+    qcEl.style.display = 'none';
+  }
+
+  document.getElementById('modal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('show');
+  pendingDoc = null;
+}
+
+document.getElementById('btn-qc-cancel').addEventListener('click', async () => {
+  closeModal();
+  await startScanner();
+});
+
+document.getElementById('btn-qc-confirm').addEventListener('click', async () => {
+  if (!pendingDoc) return;
+  const snap = { ...pendingDoc };
+  const btn  = document.getElementById('btn-qc-confirm');
+  btn.disabled = true;
+  try {
+    await db.collection('installations').doc(snap.docId).update({
+      qc: {
+        checkedBy:  currentUser.displayName || currentUser.email,
+        checkedAt:  firebase.firestore.FieldValue.serverTimestamp(),
+        lineUserId: currentUser.uid,
+      },
+    });
+    showToast('QC สำเร็จ', 'success');
+    closeModal();
+    addToHistoryLocal(snap);
+    await startScanner();
+    loadTodayHistory();
+  } catch (err) {
+    console.error(err);
+    showToast('บันทึกไม่สำเร็จ: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ============================================================
+// HISTORY
+// ============================================================
+async function loadTodayHistory() {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  try {
+    const snap = await db.collection('installations')
+      .where('qc.checkedAt', '>=', todayStart)
+      .get();
+    todayHistory = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+    todayHistory.sort((a, b) => {
+      const ta = a.qc?.checkedAt?.toMillis?.() ?? 0;
+      const tb = b.qc?.checkedAt?.toMillis?.() ?? 0;
+      return tb - ta;
+    });
+  } catch (err) {
+    console.warn('loadTodayHistory:', err.message);
+  }
+  renderHistory();
+}
+
+function addToHistoryLocal(data) {
+  if (todayHistory.some(h => h.docId === data.docId)) return;
+  todayHistory.unshift({
+    ...data,
+    qc: {
+      checkedBy: currentUser.displayName || currentUser.email,
+      checkedAt: { toMillis: () => Date.now(), toDate: () => new Date() },
+    },
+  });
+  renderHistory();
+}
+
+function renderHistory() {
+  document.getElementById('today-count').textContent = todayHistory.length;
+  const el = document.getElementById('history-list');
+  if (todayHistory.length === 0) {
+    el.innerHTML = '<div class="empty-history">ยังไม่มีรายการวันนี้</div>';
+    return;
+  }
+  el.innerHTML = todayHistory.map(a => {
+    const site   = a.location?.siteName || a.location?.office || a.location?.province || '—';
+    const device = DEVICE_LABEL[a.deviceType] || a.deviceType || '—';
+    const ts     = a.qc?.checkedAt?.toDate ? a.qc.checkedAt.toDate() : new Date();
+    const time   = ts.toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' });
+    const by     = a.qc?.checkedBy || '—';
+    return `
+      <div class="history-item">
+        <div>
+          <div class="history-asset-id">${a.assetId || '—'}</div>
+          <div class="history-device">${device} · กล่อง ${a.boxNumber || '—'}</div>
+          <div class="history-site">${site}</div>
+        </div>
+        <div class="history-right">
+          <div class="history-time">${time}</div>
+          <div class="history-by">${by}</div>
+          <span class="qc-badge">✓ QC</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ` ${type}` : '');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>

@@ -17,7 +17,8 @@ service cloud.firestore {
           'completedAt',
           'exported',
           'exportedAt',
-          'flags'
+          'flags',
+          'qc'
         ]);
       }
 
