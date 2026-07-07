@@ -483,8 +483,7 @@ function renderQCList() {
       <div class="qc-item">
         <div class="qc-time">${fmtQCTime(d.qc.checkedAt)}</div>
         <div class="qc-body">
-          <div class="qc-asset"><span class="badge ${badge}">${devLbl}</span>${d.assetId || '—'}</div>
-          <div class="qc-detail">กล่อง ${d.boxNumber || '—'}</div>
+          <div class="qc-asset"><span class="badge ${badge}">${devLbl}</span>${d.boxNumber || '—'}</div>
           <div class="qc-site">${site}</div>
         </div>
         <div class="qc-by">${d.qc.checkedBy}</div>
