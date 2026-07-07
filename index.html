@@ -913,7 +913,6 @@ async function initLiff() {
 async function loadAssets() {
   try {
     const snap = await db.collection('installations')
-      .where('status', 'in', ['pending', 'uploading'])
       .orderBy('assetId')
       .get();
     allAssets = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
@@ -1234,20 +1233,18 @@ function lookupBoxNumber() {
     return Number.isInteger(front) && front === wanted;
   });
 
-  const listEl = document.getElementById('box-match-list');
-
   if (matches.length === 0) {
     showToast(`ไม่พบกล่องเลขที่ ${wanted}`, 'error');
-    listEl.innerHTML = '';
     return;
   }
 
   const available = matches.filter(a => a.status !== 'completed');
   if (available.length === 0) {
     showToast(`กล่อง ${wanted} ติดตั้งเสร็จแล้ว`, 'error');
-    listEl.innerHTML = '';
     return;
   }
+
+  const listEl = document.getElementById('box-match-list');
 
   if (available.length === 1) {
     pendingAsset = available[0];
