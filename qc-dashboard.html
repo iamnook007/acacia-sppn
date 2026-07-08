@@ -13,6 +13,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root {
   --blue:#1B4F8A; --blue-dark:#143D6B; --blue-light:#EBF2FB;
@@ -67,6 +68,21 @@ body{font-family:'Sarabun',sans-serif;background:var(--gray-100);color:var(--gra
   white-space:nowrap;align-self:flex-end;
 }
 .btn-refresh:hover{background:var(--blue-dark)}
+.btn-export{
+  background:var(--green);color:#fff;border:none;border-radius:8px;
+  padding:9px 18px;font-family:inherit;font-size:0.9rem;font-weight:600;cursor:pointer;
+  white-space:nowrap;align-self:flex-end;
+}
+.btn-export:hover{background:#145C37}
+
+/* TOAST */
+.toast-dash{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:#1E293B;color:#fff;padding:10px 20px;border-radius:10px;
+  font-size:0.9rem;font-weight:600;white-space:nowrap;
+  opacity:0;transition:opacity 0.2s;pointer-events:none;z-index:999;
+}
+.toast-dash.show{opacity:1}
 
 /* TABLES */
 .tbl-wrap{overflow-x:auto}
@@ -151,6 +167,7 @@ tfoot td{border-top:2px solid var(--gray-200);background:var(--blue-light);font-
         </select>
       </div>
       <button class="btn-refresh" id="btn-refresh">↺ รีเฟรช</button>
+      <button class="btn-export" id="btn-export">⬇ Export Excel</button>
     </div>
   </div>
 
@@ -170,6 +187,8 @@ tfoot td{border-top:2px solid var(--gray-200);background:var(--blue-light);font-
   </div>
 
 </div>
+
+<div class="toast-dash" id="toast-dash"></div>
 
 <script>
 const FIREBASE_CONFIG = {
@@ -493,6 +512,65 @@ function renderQCList() {
       </div>`;
   }).join('');
 }
+
+// ============================================================
+// EXPORT EXCEL
+// ============================================================
+function showToastDash(msg) {
+  const el = document.getElementById('toast-dash');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+function exportExcel() {
+  const filtered = qcDocs
+    .filter(d =>
+      inRange(d.qc.checkedAt) && (!filterStaff || d.qc.checkedBy === filterStaff)
+    )
+    .sort((a, b) => {
+      const ta = a.qc.checkedAt?.toMillis?.() ?? 0;
+      const tb = b.qc.checkedAt?.toMillis?.() ?? 0;
+      return tb - ta;
+    });
+
+  if (filtered.length === 0) {
+    showToastDash('ไม่มีข้อมูลให้ export');
+    return;
+  }
+
+  const rows = filtered.map(d => {
+    const ts   = d.qc.checkedAt?.toDate ? d.qc.checkedAt.toDate() : new Date(d.qc.checkedAt);
+    const dd   = String(ts.getDate()).padStart(2,'0');
+    const mm   = String(ts.getMonth()+1).padStart(2,'0');
+    const yyyy = ts.getFullYear();
+    const hh   = String(ts.getHours()).padStart(2,'0');
+    const min  = String(ts.getMinutes()).padStart(2,'0');
+
+    const cl     = d.qc?.checklist || {};
+    const total  = Object.keys(cl).length;
+    const passed = Object.values(cl).filter(v => v === true).length;
+
+    return {
+      'วันที่':           `${dd}/${mm}/${yyyy}`,
+      'เวลา':             `${hh}:${min}`,
+      'Asset ID':         d.assetId || d.docId,
+      'เลขกล่อง':         d.boxNumber || '',
+      'ประเภท':           d.deviceType || '',
+      'หน่วยงาน':         d.location?.siteName || d.location?.office || d.location?.province || '',
+      'S/N':              d.serialNumbers?.pc || '',
+      'ผู้ตรวจ':          d.qc.checkedBy || '',
+      'Checklist ผ่านครบ': total > 0 ? `${passed}/${total}` : '—',
+    };
+  });
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'QC Report');
+  XLSX.writeFile(wb, `QC_Report_${todayStr()}.xlsx`);
+}
+
+document.getElementById('btn-export').addEventListener('click', exportExcel);
 
 // ============================================================
 // START
