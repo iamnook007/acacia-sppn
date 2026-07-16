@@ -441,6 +441,7 @@
     }
     .upload-step-dot.done { background: var(--green); }
     .upload-step-dot.active { background: var(--blue); animation: pulse 1s infinite; }
+    .upload-step-dot.skip { background: var(--gray-300, #D1D5DB); }
     @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
     .upload-step-label { font-size: 0.85rem; color: var(--gray-600); }
     .upload-step-label.done { color: var(--green); font-weight: 600; }
@@ -1141,7 +1142,7 @@ function checkSubmitReady() {
 
   // all photo slots filled?
   const allSlots = tmpl.pages.flatMap(p => p.slots.map(s => s.key));
-  const photosDone = allSlots.every(k => photos[k]);
+  const photosDone = allSlots.filter(k => k !== 'installDoc').every(k => photos[k]);
 
   // all S/N filled?
   const snDone = tmpl.snFields.every(f => {
@@ -1381,11 +1382,22 @@ async function submitInstallation() {
     const total = allSlots.length + 1;
 
     for (const slot of allSlots) {
+      const file = photos[slot.key];
+
+      if (slot.key === 'installDoc' && !file) {
+        document.getElementById(`dot-${slot.key}`).className = 'upload-step-dot skip';
+        document.getElementById(`lbl-${slot.key}`).className = 'upload-step-label';
+        done++;
+        const pct = Math.round((done / total) * 100);
+        document.getElementById('upload-progress').style.width = pct + '%';
+        document.getElementById('upload-progress-label').textContent = pct + '%';
+        continue;
+      }
+
       document.getElementById(`dot-${slot.key}`).className = 'upload-step-dot active';
       document.getElementById(`lbl-${slot.key}`).className = 'upload-step-label active';
 
-      const file = photos[slot.key];
-      if (!file) throw new Error(`ไม่มีรูปสำหรับ ${slot.key} — กลับไปถ่ายใหม่`);
+      if (!file && slot.key !== 'installDoc') throw new Error(`ไม่มีรูปสำหรับ ${slot.key} — กลับไปถ่ายใหม่`);
       const idx  = String(allSlots.indexOf(slot) + 1).padStart(2, '0');
       const path = `installations/${currentAsset.assetId}/${idx}_${slot.key}.jpg`;
       const ref  = storage.ref(path);
