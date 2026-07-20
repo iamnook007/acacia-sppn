@@ -506,8 +506,8 @@ function showScreen(name) {
 // ============================================================
 async function loadQCCount() {
   try {
-    const snap = await db.collection('installations')
-      .where('qc.checkedBy', '>', '')
+    const snap = await db.collection('qc_checks')
+      .where('deviceType', 'in', ['PC1', 'PC2', 'Notebook'])
       .get();
     const count = snap.size;
     const p = Math.round((count / QC_TOTAL) * 100);
@@ -583,8 +583,11 @@ async function lookupSN(sn) {
       return;
     }
     pendingDoc = { docId: snap.docs[0].id, ...snap.docs[0].data() };
-    if (pendingDoc.qc && pendingDoc.qc.checkedAt) {
-      showQCDonePopup(pendingDoc);
+    const assetId = pendingDoc.assetId || pendingDoc.docId;
+    const qcDoc = await db.collection('qc_checks').doc(assetId).get();
+    if (qcDoc.exists && qcDoc.data().checkedAt) {
+      const qcData = qcDoc.data();
+      showQCDonePopup({ ...pendingDoc, qc: { checkedBy: qcData.checkedBy, checkedAt: qcData.checkedAt } });
       return;
     }
     buildChecklistScreen(pendingDoc);
@@ -693,13 +696,17 @@ document.getElementById('btn-pass-qc').addEventListener('click', async () => {
   currentItems.forEach(i => { checklistData[i.key] = true; });
 
   try {
-    await db.collection('installations').doc(pendingDoc.docId).update({
-      qc: {
-        checkedBy: currentUser.email,
-        checkedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        uid:       currentUser.uid,
-        checklist: checklistData,
-      },
+    const assetId = pendingDoc.assetId || pendingDoc.docId;
+    await db.collection('qc_checks').doc(assetId).set({
+      assetId:       assetId,
+      deviceType:    pendingDoc.deviceType,
+      boxNumber:     pendingDoc.boxNumber,
+      location:      pendingDoc.location || {},
+      serialNumbers: pendingDoc.serialNumbers || {},
+      checkedBy:     currentUser.email,
+      checkedAt:     firebase.firestore.FieldValue.serverTimestamp(),
+      uid:           currentUser.uid,
+      checklist:     checklistData,
     });
     showToast('QC สำเร็จ ✓', 'success');
     pendingDoc = null;
