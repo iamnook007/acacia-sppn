@@ -292,11 +292,8 @@ async function loadData() {
   try { await firebase.auth().signInAnonymously(); } catch (e) { console.warn('auth', e); }
 
   try {
-    const snap = await db.collection('installations')
-      .where('deviceType', 'in', ['PC1', 'PC2', 'Notebook'])
-      .get();
-    allDocs = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
-    qcDocs  = allDocs.filter(d => d.qc?.checkedBy);
+    const snap = await db.collection('qc_checks').get();
+    qcDocs = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
 
     document.getElementById('last-loaded').textContent =
       new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -323,7 +320,7 @@ async function loadData() {
 // DROPDOWN
 // ============================================================
 function populateStaffDropdown() {
-  const names = [...new Set(qcDocs.map(d => d.qc.checkedBy))].sort();
+  const names = [...new Set(qcDocs.map(d => d.checkedBy))].sort();
   const sel   = document.getElementById('filter-staff');
   const prev  = sel.value;
   sel.innerHTML = '<option value="">— ทั้งหมด —</option>'
@@ -391,7 +388,7 @@ function renderStaffTable() {
   }
 
   const ranged = qcDocs.filter(d =>
-    inRange(d.qc.checkedAt) && (!filterStaff || d.qc.checkedBy === filterStaff)
+    inRange(d.checkedAt) && (!filterStaff || d.checkedBy === filterStaff)
   );
 
   if (ranged.length === 0) {
@@ -401,12 +398,12 @@ function renderStaffTable() {
 
   const staffMap = {};
   for (const doc of ranged) {
-    const name = doc.qc.checkedBy;
+    const name = doc.checkedBy;
     if (!staffMap[name]) staffMap[name] = { pc1: 0, pc2: 0, nb: 0, days: new Set() };
     if (doc.deviceType === 'PC1')      staffMap[name].pc1++;
     else if (doc.deviceType === 'PC2') staffMap[name].pc2++;
     else if (doc.deviceType === 'Notebook') staffMap[name].nb++;
-    const d = dateOf(doc.qc.checkedAt);
+    const d = dateOf(doc.checkedAt);
     if (d) staffMap[name].days.add(d);
   }
 
@@ -428,7 +425,7 @@ function renderStaffTable() {
   const sumPC2 = rows.reduce((s, r) => s + r.pc2, 0);
   const sumNB  = rows.reduce((s, r) => s + r.nb, 0);
   const sumAll = sumPC1 + sumPC2 + sumNB;
-  const allDays = new Set(ranged.map(d => dateOf(d.qc.checkedAt)).filter(Boolean));
+  const allDays = new Set(ranged.map(d => dateOf(d.checkedAt)).filter(Boolean));
   const avgAll  = allDays.size > 0 ? (sumAll / allDays.size).toFixed(1) : '—';
 
   const dash = v => v || '<span style="color:var(--gray-400)">—</span>';
@@ -480,11 +477,11 @@ function renderStaffTable() {
 function renderQCList() {
   const filtered = qcDocs
     .filter(d =>
-      inRange(d.qc.checkedAt) && (!filterStaff || d.qc.checkedBy === filterStaff)
+      inRange(d.checkedAt) && (!filterStaff || d.checkedBy === filterStaff)
     )
     .sort((a, b) => {
-      const ta = a.qc.checkedAt?.toMillis?.() ?? 0;
-      const tb = b.qc.checkedAt?.toMillis?.() ?? 0;
+      const ta = a.checkedAt?.toMillis?.() ?? 0;
+      const tb = b.checkedAt?.toMillis?.() ?? 0;
       return tb - ta;
     });
 
@@ -503,12 +500,12 @@ function renderQCList() {
     const devLbl = DEVICE_LABEL[d.deviceType] || d.deviceType;
     return `
       <div class="qc-item">
-        <div class="qc-time">${fmtQCTime(d.qc.checkedAt)}</div>
+        <div class="qc-time">${fmtQCTime(d.checkedAt)}</div>
         <div class="qc-body">
           <div class="qc-asset"><span class="badge ${badge}">${devLbl}</span>${d.boxNumber || '—'}</div>
           <div class="qc-site">${site}</div>
         </div>
-        <div class="qc-by">${d.qc.checkedBy}</div>
+        <div class="qc-by">${d.checkedBy}</div>
       </div>`;
   }).join('');
 }
@@ -526,11 +523,11 @@ function showToastDash(msg) {
 function exportExcel() {
   const filtered = qcDocs
     .filter(d =>
-      inRange(d.qc.checkedAt) && (!filterStaff || d.qc.checkedBy === filterStaff)
+      inRange(d.checkedAt) && (!filterStaff || d.checkedBy === filterStaff)
     )
     .sort((a, b) => {
-      const ta = a.qc.checkedAt?.toMillis?.() ?? 0;
-      const tb = b.qc.checkedAt?.toMillis?.() ?? 0;
+      const ta = a.checkedAt?.toMillis?.() ?? 0;
+      const tb = b.checkedAt?.toMillis?.() ?? 0;
       return tb - ta;
     });
 
@@ -540,14 +537,14 @@ function exportExcel() {
   }
 
   const rows = filtered.map(d => {
-    const ts   = d.qc.checkedAt?.toDate ? d.qc.checkedAt.toDate() : new Date(d.qc.checkedAt);
+    const ts   = d.checkedAt?.toDate ? d.checkedAt.toDate() : new Date(d.checkedAt);
     const dd   = String(ts.getDate()).padStart(2,'0');
     const mm   = String(ts.getMonth()+1).padStart(2,'0');
     const yyyy = ts.getFullYear();
     const hh   = String(ts.getHours()).padStart(2,'0');
     const min  = String(ts.getMinutes()).padStart(2,'0');
 
-    const cl     = d.qc?.checklist || {};
+    const cl     = d.checklist || {};
     const total  = Object.keys(cl).length;
     const passed = Object.values(cl).filter(v => v === true).length;
 
@@ -559,7 +556,7 @@ function exportExcel() {
       'ประเภท':           d.deviceType || '',
       'หน่วยงาน':         d.location?.siteName || d.location?.office || d.location?.province || '',
       'S/N':              d.serialNumbers?.pc || '',
-      'ผู้ตรวจ':          d.qc.checkedBy || '',
+      'ผู้ตรวจ':          d.checkedBy || '',
       'Checklist ผ่านครบ': total > 0 ? `${passed}/${total}` : '—',
     };
   });
