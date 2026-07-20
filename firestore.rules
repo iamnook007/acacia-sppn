@@ -3,11 +3,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    match /installations/{id} {
-      function signedIn() {
-        return request.auth != null;
-      }
+    function signedIn() {
+      return request.auth != null;
+    }
 
+    match /installations/{id} {
       function onlyAllowedFields() {
         return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'status',
@@ -37,6 +37,14 @@ service cloud.firestore {
       allow update: if signedIn()
                        && onlyAllowedFields()
                        && statusTransitionOk();
+    }
+
+    match /qc_checks/{assetId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasAll(['assetId', 'checkedBy', 'checkedAt'])
+        && request.resource.data.assetId == assetId;
+      allow delete: if false;
     }
 
     match /{document=**} {
