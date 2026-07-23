@@ -9,6 +9,7 @@
 <title>Admin Dashboard — ติดตั้งครุภัณฑ์ สป.พน.</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   :root {
     --blue:#1B4F8A; --blue-dark:#143D6B; --blue-light:#EBF2FB;
@@ -421,8 +422,10 @@
       <button class="modal-close" onclick="closeModal()">×</button>
     </div>
     <div class="modal-info" id="modal-info"></div>
-    <div style="display:flex;gap:10px;margin-bottom:16px">
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
       <button class="btn btn-primary" id="modal-pdf-btn">📄 สร้าง PDF</button>
+      <button class="btn btn-success" id="modal-zip-btn" onclick="downloadAllPhotosZip()">⬇ ดาวน์โหลดรูปทั้งหมด (ZIP)</button>
+      <span id="modal-zip-progress" style="font-size:0.85rem;color:var(--gray-600);display:none"></span>
     </div>
     <div class="photo-grid-modal" id="modal-photos"></div>
   </div>
@@ -792,6 +795,7 @@ function compressImage(file){
 function openModal(docId){
   const a=allAssets.find(x=>x.docId===docId);
   if(!a)return;
+  _modalAsset = a;
   document.getElementById('modal-asset').textContent='กล่อง '+(a.boxNumber||'-');
   document.getElementById('modal-loc').textContent=siteName(a.location)+' | '+(TEMPLATE_LABELS[a.deviceType]||a.deviceType)+' | '+a.assetId;
 
@@ -838,6 +842,54 @@ function openModal(docId){
   document.getElementById('modal-bg').classList.add('show');
 }
 function closeModal(){document.getElementById('modal-bg').classList.remove('show');}
+
+// ============================================================
+// ZIP — download all photos for current modal asset
+// ============================================================
+let _modalAsset = null;
+
+async function downloadAllPhotosZip(){
+  const a = _modalAsset;
+  if(!a) return;
+  const slots = TEMPLATE_PHOTOS[a.deviceType] || TEMPLATE_PHOTOS.PC1;
+  const photos = a.photos || {};
+  const urls = slots.map((key,i)=>({key,url:photos[key],idx:i+1})).filter(x=>x.url);
+  if(!urls.length){ toast('ไม่มีรูปให้ดาวน์โหลด'); return; }
+
+  const btn = document.getElementById('modal-zip-btn');
+  const prog = document.getElementById('modal-zip-progress');
+  btn.disabled = true;
+  prog.style.display = '';
+  prog.textContent = `กำลังเตรียมไฟล์... 0/${urls.length} รูป`;
+
+  try{
+    const zip = new JSZip();
+    const folder = zip.folder(a.assetId);
+    let done = 0;
+    for(const {key,url,idx} of urls){
+      const nn = String(idx).padStart(2,'0');
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      folder.file(`${nn}_${key}.jpg`, blob);
+      done++;
+      prog.textContent = `กำลังเตรียมไฟล์... ${done}/${urls.length} รูป`;
+    }
+    prog.textContent = 'กำลังบีบอัดไฟล์...';
+    const zipBlob = await zip.generateAsync({type:'blob'});
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(zipBlob);
+    link.download = `${a.assetId}_photos.zip`;
+    link.click();
+    setTimeout(()=>URL.revokeObjectURL(link.href), 10000);
+    toast(`ดาวน์โหลด ZIP สำเร็จ (${done} รูป)`);
+  }catch(err){
+    console.error(err);
+    toast('เกิดข้อผิดพลาดระหว่างดาวน์โหลด');
+  }finally{
+    btn.disabled = false;
+    prog.style.display = 'none';
+  }
+}
 
 // ============================================================
 // PDF — print via hidden iframe (desktop)
