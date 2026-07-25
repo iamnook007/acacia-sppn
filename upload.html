@@ -631,7 +631,7 @@ async function submitUpload() {
     // Check if all template slots are now filled → mark completed
     const finalPhotos = { ...(currentAsset.photos || {}) };
     for (const slotKey of slotKeys) finalPhotos[slotKey] = newUrls[slotKey];
-    const allFilled = allSlots.every(s => !!finalPhotos[s]);
+    const allFilled = allSlots.filter(s => s !== 'installDoc').every(s => !!finalPhotos[s]);
     if (allFilled && currentAsset.status !== 'completed') {
       update.status = 'completed';
       update.completedAt = firebase.firestore.FieldValue.serverTimestamp();
