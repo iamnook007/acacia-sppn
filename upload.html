@@ -390,7 +390,7 @@ function renderAssetList() {
     list.innerHTML = '<div class="empty">ไม่พบรายการ</div>';
     return;
   }
-  list.innerHTML = filtered.slice(0, 200).map(a => `
+  list.innerHTML = filtered.slice(0, 600).map(a => `
     <div class="asset-row" onclick="selectAsset('${a.docId}')">
       <div class="asset-id">${a.assetId || '-'}</div>
       <div class="asset-box">กล่อง ${a.boxNumber || '-'}</div>
