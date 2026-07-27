@@ -690,6 +690,7 @@ async function submitUpload() {
     // Re-render header + grid so badges reset to "รูปเดิม"
     renderUploadHeader(currentAsset);
     renderPhotoGrid(currentAsset);
+    renderAssetList();
 
   } catch (err) {
     console.error(err);
@@ -786,6 +787,7 @@ async function submitPartial() {
     updateFileSummary();
     renderUploadHeader(currentAsset);
     renderPhotoGrid(currentAsset);
+    renderAssetList();
 
   } catch (err) {
     console.error(err);
