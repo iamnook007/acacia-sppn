@@ -209,7 +209,7 @@
         <div class="actions-row">
           <div class="file-summary" id="file-summary">รูปที่จะอัป: <strong>0</strong></div>
           <button class="btn-submit" id="btn-submit" type="button" disabled>บันทึก</button>
-          <button class="btn-partial" id="btn-partial" type="button" disabled>ต้องมีรูปอย่างน้อย 50%</button>
+          <button class="btn-partial" id="btn-partial" type="button" disabled>ต้องมีรูปอย่างน้อย 1 รูป</button>
         </div>
         <div class="upload-progress" id="upload-progress" style="display:none">
           <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
@@ -556,17 +556,16 @@ function updateFileSummary() {
     const previewPhotos = { ...(currentAsset.photos || {}) };
     for (const k of Object.keys(newFiles)) previewPhotos[k] = 'pending';
     const filledCount = requiredSlots.filter(s => !!previewPhotos[s]).length;
-    const fillPercent = requiredSlots.length ? filledCount / requiredSlots.length : 0;
-    if (fillPercent >= 0.5) {
+    if (filledCount >= 1) {
       partialBtn.disabled = false;
       partialBtn.textContent = 'บันทึกเป็นติดตั้งแล้ว (รูปไม่ครบ)';
     } else {
       partialBtn.disabled = true;
-      partialBtn.textContent = 'ต้องมีรูปอย่างน้อย 50%';
+      partialBtn.textContent = 'ต้องมีรูปอย่างน้อย 1 รูป';
     }
   } else {
     partialBtn.disabled = true;
-    partialBtn.textContent = 'ต้องมีรูปอย่างน้อย 50%';
+    partialBtn.textContent = 'ต้องมีรูปอย่างน้อย 1 รูป';
   }
 }
 
@@ -710,10 +709,9 @@ async function submitPartial() {
   const previewPhotos = { ...(currentAsset.photos || {}) };
   for (const k of Object.keys(newFiles)) previewPhotos[k] = 'pending';
   const filledCount = requiredSlots.filter(s => !!previewPhotos[s]).length;
-  const fillPercent = requiredSlots.length ? filledCount / requiredSlots.length : 0;
 
-  if (fillPercent < 0.5) {
-    toast('ต้องมีรูปอย่างน้อย 50% ก่อนบันทึก', 'error');
+  if (filledCount < 1) {
+    toast('ต้องมีรูปอย่างน้อย 1 รูปก่อนบันทึก', 'error');
     return;
   }
 
@@ -794,7 +792,7 @@ async function submitPartial() {
     resultEl.className = 'upload-result result-err';
     resultEl.innerHTML = `✗ อัปโหลดไม่สำเร็จ: ${err.code || ''} ${err.message || 'unknown error'}`;
   } finally {
-    partialBtn.disabled = Object.keys(newFiles).length === 0 && fillPercent < 0.5;
+    partialBtn.disabled = Object.keys(newFiles).length === 0 && filledCount < 1;
     partialBtn.textContent = 'บันทึกเป็นติดตั้งแล้ว (รูปไม่ครบ)';
     submitBtn.disabled = Object.keys(newFiles).length === 0;
   }
