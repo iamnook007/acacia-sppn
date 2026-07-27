@@ -122,6 +122,9 @@
   .btn-submit{background:var(--blue);color:#fff;border:none;padding:12px 28px;border-radius:var(--radius-sm);font-family:inherit;font-weight:700;font-size:0.95rem;cursor:pointer}
   .btn-submit:disabled{background:var(--gray-200);color:var(--gray-400);cursor:not-allowed}
   .btn-submit:hover:not(:disabled){background:var(--blue-dark)}
+  .btn-partial{background:#E65100;color:#fff;border:none;padding:12px 20px;border-radius:var(--radius-sm);font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer}
+  .btn-partial:disabled{background:var(--gray-200);color:var(--gray-400);cursor:not-allowed}
+  .btn-partial:hover:not(:disabled){background:#BF360C}
 
   .upload-progress{margin-top:14px;padding-top:14px;border-top:1px solid var(--gray-100)}
   .progress-bar{height:8px;background:var(--gray-100);border-radius:999px;overflow:hidden;margin-bottom:8px}
@@ -206,6 +209,7 @@
         <div class="actions-row">
           <div class="file-summary" id="file-summary">รูปที่จะอัป: <strong>0</strong></div>
           <button class="btn-submit" id="btn-submit" type="button" disabled>บันทึก</button>
+          <button class="btn-partial" id="btn-partial" type="button" disabled>ต้องมีรูปอย่างน้อย 50%</button>
         </div>
         <div class="upload-progress" id="upload-progress" style="display:none">
           <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
@@ -544,6 +548,26 @@ function updateFileSummary() {
   const n = Object.keys(newFiles).length;
   document.getElementById('file-summary').innerHTML = `รูปที่จะอัป: <strong>${n}</strong>`;
   document.getElementById('btn-submit').disabled = n === 0;
+
+  const partialBtn = document.getElementById('btn-partial');
+  if (currentAsset) {
+    const allSlots = TEMPLATES[currentAsset.deviceType] || [];
+    const requiredSlots = allSlots.filter(s => s !== 'installDoc');
+    const previewPhotos = { ...(currentAsset.photos || {}) };
+    for (const k of Object.keys(newFiles)) previewPhotos[k] = 'pending';
+    const filledCount = requiredSlots.filter(s => !!previewPhotos[s]).length;
+    const fillPercent = requiredSlots.length ? filledCount / requiredSlots.length : 0;
+    if (fillPercent >= 0.5) {
+      partialBtn.disabled = false;
+      partialBtn.textContent = 'บันทึกเป็นติดตั้งแล้ว (รูปไม่ครบ)';
+    } else {
+      partialBtn.disabled = true;
+      partialBtn.textContent = 'ต้องมีรูปอย่างน้อย 50%';
+    }
+  } else {
+    partialBtn.disabled = true;
+    partialBtn.textContent = 'ต้องมีรูปอย่างน้อย 50%';
+  }
 }
 
 // ============================================================
@@ -577,6 +601,7 @@ function compressImage(file, maxW = 1280, quality = 0.85) {
 // SUBMIT UPLOAD
 // ============================================================
 document.getElementById('btn-submit').addEventListener('click', submitUpload);
+document.getElementById('btn-partial').addEventListener('click', submitPartial);
 
 async function submitUpload() {
   if (!currentAsset) return;
@@ -635,6 +660,8 @@ async function submitUpload() {
     if (allFilled && currentAsset.status !== 'completed') {
       update.status = 'completed';
       update.completedAt = firebase.firestore.FieldValue.serverTimestamp();
+      update.photosIncomplete = firebase.firestore.FieldValue.delete();
+      update.missingSlots = firebase.firestore.FieldValue.delete();
     }
 
     await db.collection('installations').doc(currentAsset.docId).update(update);
@@ -672,6 +699,104 @@ async function submitUpload() {
   } finally {
     submitBtn.disabled = Object.keys(newFiles).length === 0;
     submitBtn.textContent = 'บันทึก';
+  }
+}
+
+async function submitPartial() {
+  if (!currentAsset) return;
+
+  const allSlots = TEMPLATES[currentAsset.deviceType] || [];
+  const requiredSlots = allSlots.filter(s => s !== 'installDoc');
+  const previewPhotos = { ...(currentAsset.photos || {}) };
+  for (const k of Object.keys(newFiles)) previewPhotos[k] = 'pending';
+  const filledCount = requiredSlots.filter(s => !!previewPhotos[s]).length;
+  const fillPercent = requiredSlots.length ? filledCount / requiredSlots.length : 0;
+
+  if (fillPercent < 0.5) {
+    toast('ต้องมีรูปอย่างน้อย 50% ก่อนบันทึก', 'error');
+    return;
+  }
+
+  const slotKeys = Object.keys(newFiles);
+  const partialBtn = document.getElementById('btn-partial');
+  const submitBtn  = document.getElementById('btn-submit');
+  partialBtn.disabled = true;
+  partialBtn.textContent = 'กำลังอัป...';
+  submitBtn.disabled = true;
+
+  const progressEl   = document.getElementById('upload-progress');
+  const progressFill = document.getElementById('progress-fill');
+  const progressText = document.getElementById('progress-text');
+  progressEl.style.display = 'block';
+  progressFill.style.width = '0%';
+
+  const resultEl = document.getElementById('upload-result');
+  resultEl.className = 'result-empty';
+  resultEl.innerHTML = '';
+
+  const newUrls = {};
+
+  try {
+    for (let i = 0; i < slotKeys.length; i++) {
+      const slotKey = slotKeys[i];
+      const file = newFiles[slotKey];
+      progressText.textContent = `กำลังอัป ${i + 1}/${slotKeys.length} — ${PHOTO_LABELS[slotKey] || slotKey}`;
+      const blob  = await compressImage(file);
+      const idx   = allSlots.indexOf(slotKey) + 1;
+      const fname = String(idx).padStart(2, '0') + '_' + slotKey + '.jpg';
+      const path  = `installations/${currentAsset.assetId}/${fname}`;
+      const ref   = storage.ref(path);
+      await ref.put(blob);
+      newUrls[slotKey] = await ref.getDownloadURL();
+      progressFill.style.width = Math.round(((i + 1) / slotKeys.length) * 100) + '%';
+    }
+
+    progressText.textContent = 'กำลังบันทึก Firestore...';
+
+    const finalPhotos = { ...(currentAsset.photos || {}) };
+    for (const slotKey of slotKeys) finalPhotos[slotKey] = newUrls[slotKey];
+    const missingSlots = requiredSlots.filter(s => !finalPhotos[s]);
+
+    const update = {};
+    for (const slotKey of slotKeys) update['photos.' + slotKey] = newUrls[slotKey];
+    update.installer        = { name: 'Desktop Upload', lineUserId: 'desktop' };
+    update.status           = 'completed';
+    update.completedAt      = firebase.firestore.FieldValue.serverTimestamp();
+    update.photosIncomplete = true;
+    update.missingSlots     = missingSlots;
+
+    await db.collection('installations').doc(currentAsset.docId).update(update);
+
+    progressFill.style.width = '100%';
+    progressText.textContent = 'เสร็จสิ้น';
+
+    currentAsset.photos = currentAsset.photos || {};
+    for (const slotKey of slotKeys) currentAsset.photos[slotKey] = newUrls[slotKey];
+    currentAsset.installer        = { name: 'Desktop Upload', lineUserId: 'desktop' };
+    currentAsset.status           = 'completed';
+    currentAsset.photosIncomplete = true;
+    currentAsset.missingSlots     = missingSlots;
+
+    const cacheIdx = allAssets.findIndex(a => a.docId === currentAsset.docId);
+    if (cacheIdx >= 0) allAssets[cacheIdx] = currentAsset;
+
+    resultEl.className = 'upload-result result-ok';
+    resultEl.innerHTML = `✓ บันทึกสำเร็จ (รูปไม่ครบ — Admin จะติดตามให้อัปเพิ่ม)`;
+
+    cleanupPreviews();
+    newFiles = {};
+    updateFileSummary();
+    renderUploadHeader(currentAsset);
+    renderPhotoGrid(currentAsset);
+
+  } catch (err) {
+    console.error(err);
+    resultEl.className = 'upload-result result-err';
+    resultEl.innerHTML = `✗ อัปโหลดไม่สำเร็จ: ${err.code || ''} ${err.message || 'unknown error'}`;
+  } finally {
+    partialBtn.disabled = Object.keys(newFiles).length === 0 && fillPercent < 0.5;
+    partialBtn.textContent = 'บันทึกเป็นติดตั้งแล้ว (รูปไม่ครบ)';
+    submitBtn.disabled = Object.keys(newFiles).length === 0;
   }
 }
 
