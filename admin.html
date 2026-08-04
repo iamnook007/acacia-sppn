@@ -1095,8 +1095,31 @@ function _exitPosMode(keepPosition) {
 
 function _posMD(ev) {
   ev.preventDefault();
+  if (!_posMode) return;
+  const img = document.getElementById('slot-img-' + _posMode.key);
+  if (!img) return;
+
+  // Parse current object-position before drag starts
+  const parts = (img.style.objectPosition || '50% 50%').split(' ');
+  const startPosX = parseFloat(parts[0]) || 50;
+  const startPosY = parseFloat(parts[1]) || 50;
+
+  // Compute how many pixels the rendered image overflows the frame
+  const rect = img.getBoundingClientRect();
+  const nW = img.naturalWidth  || rect.width;
+  const nH = img.naturalHeight || rect.height;
+  const scale = Math.max(rect.width / nW, rect.height / nH);
+  const overflowX = Math.max(0, nW * scale - rect.width);
+  const overflowY = Math.max(0, nH * scale - rect.height);
+
+  _posMode.startX    = ev.clientX;
+  _posMode.startY    = ev.clientY;
+  _posMode.startPosX = startPosX;
+  _posMode.startPosY = startPosY;
+  _posMode.overflowX = overflowX;
+  _posMode.overflowY = overflowY;
+
   _posDragging = true;
-  _posCalc(ev);
   document.addEventListener('mousemove', _posMM);
   document.addEventListener('mouseup', _posMU);
 }
@@ -1115,9 +1138,16 @@ function _posCalc(ev) {
   if (!_posMode) return;
   const img = document.getElementById('slot-img-' + _posMode.key);
   if (!img) return;
-  const rect = img.getBoundingClientRect();
-  const x = Math.round(Math.max(0, Math.min(100, (ev.clientX - rect.left) / rect.width * 100)));
-  const y = Math.round(Math.max(0, Math.min(100, (ev.clientY - rect.top) / rect.height * 100)));
+  const { startX, startY, startPosX, startPosY, overflowX, overflowY } = _posMode;
+  const dX = ev.clientX - startX;
+  const dY = ev.clientY - startY;
+  // drag right (+dX) → image shifts left → objectPosition X decreases
+  const x = overflowX > 0
+    ? Math.round(Math.max(0, Math.min(100, startPosX - (dX / overflowX * 100))))
+    : 50;
+  const y = overflowY > 0
+    ? Math.round(Math.max(0, Math.min(100, startPosY - (dY / overflowY * 100))))
+    : 50;
   img.style.objectPosition = `${x}% ${y}%`;
 }
 
