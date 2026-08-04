@@ -95,6 +95,7 @@
   .photo-item .rotate-btn{position:absolute;top:6px;left:42px;width:30px;height:30px;border:none;border-radius:50%;background:rgba(255,255,255,0.92);cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.2);z-index:2}
   .photo-item .rotate-btn:hover{background:#fff}
   .photo-item .rotate-badge{position:absolute;bottom:26px;left:0;right:0;text-align:center;background:rgba(0,0,0,0.65);color:#fff;font-size:0.7rem;font-weight:700;padding:2px 0;pointer-events:none;z-index:2}
+  .photo-item.drag-over{border:3px solid var(--blue) !important;box-shadow:0 0 0 2px rgba(27,79,138,0.2)}
   .status-flagged{color:var(--red);font-weight:700}
 
   .summary-card{background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:24px;display:flex;gap:32px;align-items:center;flex-wrap:wrap}
@@ -856,11 +857,11 @@ function openModal(docId){
   document.getElementById('modal-photos').innerHTML=slots.map(key=>{
     const url=photos[key];
     const flagged=flags[key];
-    return `<div class="photo-item ${flagged?'flagged':''}" id="slot-${key}">
+    return `<div class="photo-item ${flagged?'flagged':''}" id="slot-${key}" ondragover="dragSlotOver(event,'${key}')" ondragleave="dragSlotLeave(event,'${key}')" ondrop="dragSlotDrop(event,'${key}')">
       ${url?`<button class="flag-btn ${flagged?'on':''}" onclick="flagPhoto('${a.docId}','${key}')" title="ติดธงภาพไม่สมบูรณ์">🚩</button>`:''}
       ${url?`<button class="reflag" onclick="replacePhoto('${a.docId}','${key}')" title="เปลี่ยนภาพใหม่ (upload ทับ)">📷</button>`:''}
       ${url?`<button class="rotate-btn" onclick="rotatePhoto('${key}')" title="หมุนภาพ 90°">🔄</button>`:''}
-      ${url?`<img id="slot-img-${key}" src="${url}" onclick="window.open('${url}','_blank')" />`:`<div class="missing">ไม่มีภาพ</div>`}
+      ${url?`<img id="slot-img-${key}" src="${url}" draggable="true" ondragstart="dragSlotStart(event,'${key}')" ondragend="dragSlotEnd(event)" onclick="window.open('${url}','_blank')" />`:`<div class="missing">ไม่มีภาพ</div>`}
       ${url?`<div class="rotate-badge" id="slot-badge-${key}" style="display:none"></div>`:''}
       <div class="cap">${PHOTO_LABELS[key]||key}</div>
       ${flagged?`<div class="flag-reason">🚩 ${flagged}</div>`:''}
@@ -962,6 +963,84 @@ function cancelRotations() {
   }
   pendingRotations = {};
   _updateRotateActions();
+}
+
+// ============================================================
+// Drag & Drop — swap photo slots in modal
+// ============================================================
+let _draggedSlotKey = null;
+
+function dragSlotStart(ev, key) {
+  _draggedSlotKey = key;
+  ev.dataTransfer.effectAllowed = 'move';
+  ev.target.style.opacity = '0.4';
+}
+
+function dragSlotEnd(ev) {
+  ev.target.style.opacity = '';
+  _draggedSlotKey = null;
+}
+
+function dragSlotOver(ev, key) {
+  if (!_draggedSlotKey || _draggedSlotKey === key) return;
+  ev.preventDefault();
+  ev.dataTransfer.dropEffect = 'move';
+  document.getElementById('slot-' + key)?.classList.add('drag-over');
+}
+
+function dragSlotLeave(ev, key) {
+  const el = document.getElementById('slot-' + key);
+  if (el && !el.contains(ev.relatedTarget)) el.classList.remove('drag-over');
+}
+
+function dragSlotDrop(ev, targetKey) {
+  ev.preventDefault();
+  const el = document.getElementById('slot-' + targetKey);
+  if (el) el.classList.remove('drag-over');
+  const sourceKey = _draggedSlotKey;
+  _draggedSlotKey = null;
+  if (!sourceKey || sourceKey === targetKey) return;
+  const a = _modalAsset;
+  if (!a) return;
+  const photos = a.photos || {};
+  const srcUrl = photos[sourceKey];
+  if (!srcUrl) return;
+  const tgtUrl = photos[targetKey];
+  const srcLabel = PHOTO_LABELS[sourceKey] || sourceKey;
+  const tgtLabel = PHOTO_LABELS[targetKey] || targetKey;
+  const msg = tgtUrl
+    ? `สลับรูป "${srcLabel}" ↔ "${tgtLabel}" ใช่ไหม?`
+    : `ย้ายรูป "${srcLabel}" → "${tgtLabel}" ใช่ไหม?`;
+  if (!confirm(msg)) return;
+  _doSwapSlots(a, sourceKey, targetKey, srcUrl, tgtUrl);
+}
+
+async function _doSwapSlots(a, sourceKey, targetKey, srcUrl, tgtUrl) {
+  const photos = { ...(a.photos || {}) };
+  if (tgtUrl) {
+    photos[sourceKey] = tgtUrl;
+    photos[targetKey] = srcUrl;
+  } else {
+    photos[targetKey] = srcUrl;
+    delete photos[sourceKey];
+  }
+  const patch = {};
+  patch[`photos.${targetKey}`] = srcUrl;
+  if (tgtUrl) {
+    patch[`photos.${sourceKey}`] = tgtUrl;
+  } else {
+    patch[`photos.${sourceKey}`] = firebase.firestore.FieldValue.delete();
+  }
+  try {
+    await db.collection('installations').doc(a.docId).update(patch);
+    a.photos = photos;
+    toast('สลับรูปสำเร็จ');
+    openModal(a.docId);
+    renderTable();
+  } catch(err) {
+    console.error(err);
+    toast('บันทึกไม่สำเร็จ: ' + err.message);
+  }
 }
 
 // ============================================================
