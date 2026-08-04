@@ -92,6 +92,9 @@
   .photo-item .reflag{position:absolute;top:6px;left:6px;width:30px;height:30px;border:none;border-radius:50%;background:rgba(255,255,255,0.92);cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.2);z-index:2}
   .photo-item .reflag:hover{background:#fff}
   .photo-item .flag-reason{background:var(--red-light);color:var(--red);font-size:0.7rem;font-weight:600;padding:4px 6px;text-align:center;border-top:1px solid var(--red)}
+  .photo-item .rotate-btn{position:absolute;top:6px;left:42px;width:30px;height:30px;border:none;border-radius:50%;background:rgba(255,255,255,0.92);cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.2);z-index:2}
+  .photo-item .rotate-btn:hover{background:#fff}
+  .photo-item .rotate-badge{position:absolute;bottom:26px;left:0;right:0;text-align:center;background:rgba(0,0,0,0.65);color:#fff;font-size:0.7rem;font-weight:700;padding:2px 0;pointer-events:none;z-index:2}
   .status-flagged{color:var(--red);font-weight:700}
 
   .summary-card{background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:24px;display:flex;gap:32px;align-items:center;flex-wrap:wrap}
@@ -429,6 +432,11 @@
       <button class="btn btn-primary" id="modal-pdf-btn">📄 สร้าง PDF</button>
       <button class="btn btn-success" id="modal-zip-btn" onclick="downloadAllPhotosZip()">⬇ ดาวน์โหลดรูปทั้งหมด (ZIP)</button>
       <span id="modal-zip-progress" style="font-size:0.85rem;color:var(--gray-600);display:none"></span>
+      <div id="modal-rotate-actions" style="display:none;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-primary" id="modal-save-rotate-btn" onclick="saveRotations()">✓ บันทึกการหมุน</button>
+        <button class="btn btn-outline" id="modal-cancel-rotate-btn" onclick="cancelRotations()">ยกเลิกการหมุน</button>
+        <span id="modal-rotate-progress" style="font-size:0.85rem;color:var(--gray-600);display:none"></span>
+      </div>
     </div>
     <div class="photo-grid-modal" id="modal-photos"></div>
   </div>
@@ -742,6 +750,8 @@ async function flagPhoto(docId, key){
   }catch(err){ console.error(err); toast('บันทึกไม่สำเร็จ'); }
 }
 
+let pendingRotations = {};
+
 let _replaceTarget=null;
 function replacePhoto(docId, key){
   _replaceTarget={docId,key};
@@ -838,16 +848,20 @@ function openModal(docId){
     warningEl.innerHTML = '';
   }
 
+  pendingRotations = {};
+  document.getElementById('modal-rotate-actions').style.display = 'none';
   const slots=TEMPLATE_PHOTOS[a.deviceType]||TEMPLATE_PHOTOS.PC1;
   const photos=a.photos||{};
   const flags=a.flags||{};
   document.getElementById('modal-photos').innerHTML=slots.map(key=>{
     const url=photos[key];
     const flagged=flags[key];
-    return `<div class="photo-item ${flagged?'flagged':''}">
+    return `<div class="photo-item ${flagged?'flagged':''}" id="slot-${key}">
       ${url?`<button class="flag-btn ${flagged?'on':''}" onclick="flagPhoto('${a.docId}','${key}')" title="ติดธงภาพไม่สมบูรณ์">🚩</button>`:''}
       ${url?`<button class="reflag" onclick="replacePhoto('${a.docId}','${key}')" title="เปลี่ยนภาพใหม่ (upload ทับ)">📷</button>`:''}
-      ${url?`<img src="${url}" onclick="window.open('${url}','_blank')" />`:`<div class="missing">ไม่มีภาพ</div>`}
+      ${url?`<button class="rotate-btn" onclick="rotatePhoto('${key}')" title="หมุนภาพ 90°">🔄</button>`:''}
+      ${url?`<img id="slot-img-${key}" src="${url}" onclick="window.open('${url}','_blank')" />`:`<div class="missing">ไม่มีภาพ</div>`}
+      ${url?`<div class="rotate-badge" id="slot-badge-${key}" style="display:none"></div>`:''}
       <div class="cap">${PHOTO_LABELS[key]||key}</div>
       ${flagged?`<div class="flag-reason">🚩 ${flagged}</div>`:''}
     </div>`;
@@ -857,6 +871,98 @@ function openModal(docId){
   document.getElementById('modal-bg').classList.add('show');
 }
 function closeModal(){document.getElementById('modal-bg').classList.remove('show');}
+
+function rotatePhoto(key) {
+  const newDeg = ((pendingRotations[key] || 0) + 90) % 360;
+  if (newDeg === 0) {
+    delete pendingRotations[key];
+  } else {
+    pendingRotations[key] = newDeg;
+  }
+  const img = document.getElementById('slot-img-' + key);
+  if (img) img.style.transform = newDeg ? `rotate(${newDeg}deg)` : '';
+  const badge = document.getElementById('slot-badge-' + key);
+  if (badge) {
+    if (newDeg) { badge.style.display = ''; badge.textContent = `หมุน ${newDeg}°`; }
+    else { badge.style.display = 'none'; badge.textContent = ''; }
+  }
+  _updateRotateActions();
+}
+
+function _updateRotateActions() {
+  const el = document.getElementById('modal-rotate-actions');
+  if (!el) return;
+  el.style.display = Object.keys(pendingRotations).length ? 'flex' : 'none';
+}
+
+async function saveRotations() {
+  const a = _modalAsset;
+  if (!a) return;
+  const keys = Object.keys(pendingRotations);
+  if (!keys.length) return;
+  const saveBtn = document.getElementById('modal-save-rotate-btn');
+  const cancelBtn = document.getElementById('modal-cancel-rotate-btn');
+  const prog = document.getElementById('modal-rotate-progress');
+  saveBtn.disabled = true; cancelBtn.disabled = true;
+  prog.style.display = ''; prog.textContent = `กำลังบันทึก... 0/${keys.length}`;
+  const photos = { ...(a.photos || {}) };
+  let done = 0;
+  try {
+    for (const key of keys) {
+      const url = photos[key];
+      if (!url) { done++; continue; }
+      const deg = pendingRotations[key] % 360;
+      if (!deg) { done++; continue; }
+      const blob = await _rotateImageBlob(url, deg);
+      const ref = storage.refFromURL(url);
+      await ref.put(blob, { contentType: 'image/jpeg' });
+      photos[key] = await ref.getDownloadURL();
+      done++;
+      prog.textContent = `กำลังบันทึก... ${done}/${keys.length}`;
+    }
+    await db.collection('installations').doc(a.docId).update({ photos });
+    a.photos = photos;
+    pendingRotations = {};
+    toast('บันทึกการหมุนสำเร็จ ✓');
+    openModal(a.docId);
+    renderTable();
+  } catch(err) {
+    console.error(err);
+    toast('บันทึกไม่สำเร็จ: ' + err.message);
+    saveBtn.disabled = false; cancelBtn.disabled = false;
+  }
+}
+
+function _rotateImageBlob(url, degrees) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const swap = degrees === 90 || degrees === 270;
+      const canvas = document.createElement('canvas');
+      canvas.width = swap ? img.height : img.width;
+      canvas.height = swap ? img.width : img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(degrees * Math.PI / 180);
+      ctx.drawImage(img, -img.width / 2, -img.height / 2);
+      canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/jpeg', 0.85);
+    };
+    img.onerror = () => reject(new Error('Image load failed: ' + url));
+    img.src = url;
+  });
+}
+
+function cancelRotations() {
+  for (const key of Object.keys(pendingRotations)) {
+    const img = document.getElementById('slot-img-' + key);
+    if (img) img.style.transform = '';
+    const badge = document.getElementById('slot-badge-' + key);
+    if (badge) { badge.style.display = 'none'; badge.textContent = ''; }
+  }
+  pendingRotations = {};
+  _updateRotateActions();
+}
 
 // ============================================================
 // ZIP — download all photos for current modal asset
