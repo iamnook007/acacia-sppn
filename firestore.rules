@@ -19,7 +19,8 @@ service cloud.firestore {
           'exportedAt',
           'flags',
           'photosIncomplete',
-          'missingSlots'
+          'missingSlots',
+          'photoPositions'
         ]);
       }
 
