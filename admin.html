@@ -96,6 +96,10 @@
   .photo-item .rotate-btn:hover{background:#fff}
   .photo-item .rotate-badge{position:absolute;bottom:26px;left:0;right:0;text-align:center;background:rgba(0,0,0,0.65);color:#fff;font-size:0.7rem;font-weight:700;padding:2px 0;pointer-events:none;z-index:2}
   .photo-item.drag-over{border:3px solid var(--blue) !important;box-shadow:0 0 0 2px rgba(27,79,138,0.2)}
+  .photo-item .pos-btn{position:absolute;top:6px;left:78px;width:30px;height:30px;border:none;border-radius:50%;background:rgba(255,255,255,0.92);cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.2);z-index:2}
+  .photo-item .pos-btn:hover{background:#fff}
+  .photo-item.pos-mode{outline:2.5px solid var(--blue);outline-offset:-2px}
+  .photo-item.pos-mode img{cursor:move !important;user-select:none}
   .status-flagged{color:var(--red);font-weight:700}
 
   .summary-card{background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:24px;display:flex;gap:32px;align-items:center;flex-wrap:wrap}
@@ -437,6 +441,11 @@
         <button class="btn btn-primary" id="modal-save-rotate-btn" onclick="saveRotations()">✓ บันทึกการหมุน</button>
         <button class="btn btn-outline" id="modal-cancel-rotate-btn" onclick="cancelRotations()">ยกเลิกการหมุน</button>
         <span id="modal-rotate-progress" style="font-size:0.85rem;color:var(--gray-600);display:none"></span>
+      </div>
+      <div id="modal-pos-actions" style="display:none;gap:8px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:0.85rem;color:var(--gray-600)">🎯 ลากรูปเพื่อจัดตำแหน่ง</span>
+        <button class="btn btn-primary" id="modal-save-pos-btn" onclick="savePosMode()">✓ บันทึกตำแหน่ง</button>
+        <button class="btn btn-outline" onclick="cancelPosMode()">ยกเลิก</button>
       </div>
     </div>
     <div class="photo-grid-modal" id="modal-photos"></div>
@@ -851,17 +860,22 @@ function openModal(docId){
 
   pendingRotations = {};
   document.getElementById('modal-rotate-actions').style.display = 'none';
+  _exitPosMode(false);
+  document.getElementById('modal-pos-actions').style.display = 'none';
   const slots=TEMPLATE_PHOTOS[a.deviceType]||TEMPLATE_PHOTOS.PC1;
   const photos=a.photos||{};
   const flags=a.flags||{};
+  const positions=a.photoPositions||{};
   document.getElementById('modal-photos').innerHTML=slots.map(key=>{
     const url=photos[key];
     const flagged=flags[key];
+    const pos=positions[key]||'50% 50%';
     return `<div class="photo-item ${flagged?'flagged':''}" id="slot-${key}" ondragover="dragSlotOver(event,'${key}')" ondragleave="dragSlotLeave(event,'${key}')" ondrop="dragSlotDrop(event,'${key}')">
       ${url?`<button class="flag-btn ${flagged?'on':''}" onclick="flagPhoto('${a.docId}','${key}')" title="ติดธงภาพไม่สมบูรณ์">🚩</button>`:''}
       ${url?`<button class="reflag" onclick="replacePhoto('${a.docId}','${key}')" title="เปลี่ยนภาพใหม่ (upload ทับ)">📷</button>`:''}
       ${url?`<button class="rotate-btn" onclick="rotatePhoto('${key}')" title="หมุนภาพ 90°">🔄</button>`:''}
-      ${url?`<img id="slot-img-${key}" src="${url}" draggable="true" ondragstart="dragSlotStart(event,'${key}')" ondragend="dragSlotEnd(event)" onclick="window.open('${url}','_blank')" />`:`<div class="missing">ไม่มีภาพ</div>`}
+      ${url?`<button class="pos-btn" onclick="enterPosMode('${key}')" title="จัดตำแหน่งรูปภายในกรอบ">🎯</button>`:''}
+      ${url?`<img id="slot-img-${key}" src="${url}" style="object-position:${pos}" draggable="true" ondragstart="dragSlotStart(event,'${key}')" ondragend="dragSlotEnd(event)" onclick="window.open('${url}','_blank')" />`:`<div class="missing">ไม่มีภาพ</div>`}
       ${url?`<div class="rotate-badge" id="slot-badge-${key}" style="display:none"></div>`:''}
       <div class="cap">${PHOTO_LABELS[key]||key}</div>
       ${flagged?`<div class="flag-reason">🚩 ${flagged}</div>`:''}
@@ -1044,6 +1058,98 @@ async function _doSwapSlots(a, sourceKey, targetKey, srcUrl, tgtUrl) {
 }
 
 // ============================================================
+// Object-position mode — adjust image pan within frame
+// ============================================================
+let _posMode = null;     // { key, originalPos } or null
+let _posDragging = false;
+
+function enterPosMode(key) {
+  if (_posMode) _exitPosMode(false);
+  const img = document.getElementById('slot-img-' + key);
+  if (!img) return;
+  const a = _modalAsset;
+  const originalPos = img.style.objectPosition || (a?.photoPositions||{})[key] || '50% 50%';
+  _posMode = { key, originalPos };
+  img.draggable = false;
+  img.addEventListener('mousedown', _posMD);
+  document.getElementById('slot-' + key)?.classList.add('pos-mode');
+  document.getElementById('modal-pos-actions').style.display = 'flex';
+}
+
+function _exitPosMode(keepPosition) {
+  if (!_posMode) return;
+  document.removeEventListener('mousemove', _posMM);
+  document.removeEventListener('mouseup', _posMU);
+  _posDragging = false;
+  const { key, originalPos } = _posMode;
+  _posMode = null;
+  const img = document.getElementById('slot-img-' + key);
+  if (img) {
+    if (!keepPosition) img.style.objectPosition = originalPos;
+    img.draggable = true;
+    img.removeEventListener('mousedown', _posMD);
+  }
+  document.getElementById('slot-' + key)?.classList.remove('pos-mode');
+  document.getElementById('modal-pos-actions').style.display = 'none';
+}
+
+function _posMD(ev) {
+  ev.preventDefault();
+  _posDragging = true;
+  _posCalc(ev);
+  document.addEventListener('mousemove', _posMM);
+  document.addEventListener('mouseup', _posMU);
+}
+
+function _posMM(ev) {
+  if (_posDragging) _posCalc(ev);
+}
+
+function _posMU() {
+  _posDragging = false;
+  document.removeEventListener('mousemove', _posMM);
+  document.removeEventListener('mouseup', _posMU);
+}
+
+function _posCalc(ev) {
+  if (!_posMode) return;
+  const img = document.getElementById('slot-img-' + _posMode.key);
+  if (!img) return;
+  const rect = img.getBoundingClientRect();
+  const x = Math.round(Math.max(0, Math.min(100, (ev.clientX - rect.left) / rect.width * 100)));
+  const y = Math.round(Math.max(0, Math.min(100, (ev.clientY - rect.top) / rect.height * 100)));
+  img.style.objectPosition = `${x}% ${y}%`;
+}
+
+async function savePosMode() {
+  if (!_posMode) return;
+  const { key } = _posMode;
+  const img = document.getElementById('slot-img-' + key);
+  const newPos = img ? img.style.objectPosition : '50% 50%';
+  _exitPosMode(true);
+  const a = _modalAsset;
+  if (!a) return;
+  document.getElementById('modal-save-pos-btn').disabled = true;
+  try {
+    const patch = {};
+    patch[`photoPositions.${key}`] = newPos;
+    await db.collection('installations').doc(a.docId).update(patch);
+    if (!a.photoPositions) a.photoPositions = {};
+    a.photoPositions[key] = newPos;
+    toast('บันทึกตำแหน่งสำเร็จ ✓');
+    openModal(a.docId);
+  } catch(err) {
+    console.error(err);
+    toast('บันทึกไม่สำเร็จ: ' + err.message);
+    document.getElementById('modal-save-pos-btn').disabled = false;
+  }
+}
+
+function cancelPosMode() {
+  _exitPosMode(false);
+}
+
+// ============================================================
 // ZIP — download all photos for current modal asset
 // ============================================================
 let _modalAsset = null;
@@ -1182,7 +1288,8 @@ async function buildReportHtml(data){
     const grid=slots.map(key=>{
       const url=photoData[key]||'';
       photoNum++;
-      return `<div class="photo-slot">${url?`<img src="${url}" />`:`<div class="no-photo">ไม่มีภาพ</div>`}<div class="photo-caption">${photoNum}. ${dynCaption(key,tKey,sn)}</div></div>`;
+      const objPos=(data.photoPositions||{})[key]||'50% 50%';
+      return `<div class="photo-slot">${url?`<img src="${url}" style="object-position:${objPos}" />`:`<div class="no-photo">ไม่มีภาพ</div>`}<div class="photo-caption">${photoNum}. ${dynCaption(key,tKey,sn)}</div></div>`;
     }).join('');
     pagesHtml+=`<div class="page">
       <div class="page-header"><div><div class="title">รายงานการติดตั้งครุภัณฑ์</div><div class="subtitle">สำนักงานปลัดกระทรวงพลังงาน (สป.พน.) ปีงบประมาณ 2569</div></div>
