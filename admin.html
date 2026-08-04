@@ -1077,6 +1077,7 @@ function enterPosMode(key) {
   img.draggable = false;
   document.getElementById('slot-' + key)?.classList.add('pos-mode');
   document.getElementById('modal-pos-actions').style.display = 'flex';
+  document.getElementById('modal-save-pos-btn').disabled = false;
 }
 
 function _exitPosMode(keepPosition) {
