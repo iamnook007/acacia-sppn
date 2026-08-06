@@ -793,8 +793,20 @@ async function handleReplaceFile(ev){
     // update photos[key] + ลบ flag ของภาพนี้
     const photos=a.photos||{}; photos[key]=newUrl;
     const flags=a.flags||{}; delete flags[key];
-    await db.collection('installations').doc(docId).update({ photos, flags });
+
+    // เช็คว่าครบทุก slot required หรือยัง
+    const allSlots=TEMPLATE_PHOTOS[a.deviceType]||TEMPLATE_PHOTOS.PC1;
+    const requiredSlots=allSlots.filter(s=>s!=='installDoc');
+    const allFilled=requiredSlots.every(s=>!!photos[s]);
+    const updateObj={photos, flags};
+    if(allFilled){
+      updateObj.photosIncomplete=firebase.firestore.FieldValue.delete();
+      updateObj.missingSlots=firebase.firestore.FieldValue.delete();
+    }
+
+    await db.collection('installations').doc(docId).update(updateObj);
     a.photos=photos; a.flags=flags;
+    if(allFilled){ delete a.photosIncomplete; delete a.missingSlots; }
 
     openModal(docId); renderTable();
     toast('เปลี่ยนภาพใหม่สำเร็จ ✓');
